@@ -1,0 +1,33 @@
+# --- Personal / private journal material: NEVER commit ---
+# Reference material used while designing the app (photos of handwritten
+# journals, friends' journal samples). Kept locally, never in git.
+*.jpg
+*.jpeg
+*.png
+*.heic
+sample*.txt
+vv
+notes.private.*
+
+# Local data: the SQLite DB, exported artifacts, user-defined templates.
+data/
+exports/
+
+# Secrets
+.env
+.env.local
+
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
