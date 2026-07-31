@@ -1,0 +1,67 @@
+{
+  "id": "free-bullets",
+  "name": "星號隨筆",
+  "description": "不分題目，想到什麼寫什麼，最後補上感恩與代禱。",
+  "default_theme": "linen",
+  "sections": [
+    {
+      "id": "notes",
+      "title": "今天的片段",
+      "color": "#22252a",
+      "icon": "✳",
+      "fields": [
+        {
+          "id": "bullets",
+          "label": "一則一則記下來",
+          "kind": "list",
+          "options": [],
+          "pattern": null,
+          "placeholder": "＊ 今天…",
+          "min_rows": 3,
+          "color": "#22252a",
+          "hint": null
+        }
+      ]
+    },
+    {
+      "id": "thanks",
+      "title": "感恩事項",
+      "color": "#1f7a4d",
+      "icon": "🌱",
+      "fields": [
+        {
+          "id": "gratitude",
+          "label": "感恩",
+          "kind": "list",
+          "options": [],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 3,
+          "color": "#1f7a4d",
+          "hint": null
+        }
+      ]
+    },
+    {
+      "id": "pray",
+      "title": "代禱事項",
+      "color": "#c8322c",
+      "icon": "🕊",
+      "fields": [
+        {
+          "id": "prayer",
+          "label": "代禱",
+          "kind": "list",
+          "options": [],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 3,
+          "color": "#c8322c",
+          "hint": null
+        }
+      ]
+    }
+  ],
+  "order": 4,
+  "default_layout": "postcard"
+}

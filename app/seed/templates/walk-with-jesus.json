@@ -1,0 +1,318 @@
+{
+  "id": "walk-with-jesus",
+  "name": "同行日記（完整版）",
+  "description": "逐項自省的長版本，多半是勾選題，最後留一段給神的話。",
+  "default_theme": "linen",
+  "sections": [
+    {
+      "id": "day",
+      "title": "這一天",
+      "color": "#2456b8",
+      "icon": "☀",
+      "fields": [
+        {
+          "id": "wake",
+          "label": "起床的時候想起主了嗎？",
+          "kind": "choice",
+          "options": [
+            {
+              "id": "yes",
+              "label": "有"
+            },
+            {
+              "id": "no",
+              "label": "沒有"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        },
+        {
+          "id": "meal",
+          "label": "吃飯的時候想起主了嗎？",
+          "kind": "choice",
+          "options": [
+            {
+              "id": "yes",
+              "label": "有"
+            },
+            {
+              "id": "no",
+              "label": "沒有"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        },
+        {
+          "id": "work",
+          "label": "開始工作／課業的時候想起主了嗎？",
+          "kind": "choice",
+          "options": [
+            {
+              "id": "yes",
+              "label": "有"
+            },
+            {
+              "id": "no",
+              "label": "沒有"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        },
+        {
+          "id": "commute",
+          "label": "在車上、通勤的時候想起主了嗎？",
+          "kind": "choice",
+          "options": [
+            {
+              "id": "yes",
+              "label": "有"
+            },
+            {
+              "id": "no",
+              "label": "沒有"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        },
+        {
+          "id": "home",
+          "label": "在家裡有想起主嗎？",
+          "kind": "choice",
+          "options": [
+            {
+              "id": "yes",
+              "label": "有"
+            },
+            {
+              "id": "no",
+              "label": "沒有"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        },
+        {
+          "id": "meet",
+          "label": "與人見面交流時想起主嗎？",
+          "kind": "choice",
+          "options": [
+            {
+              "id": "yes",
+              "label": "有"
+            },
+            {
+              "id": "no",
+              "label": "沒有"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        }
+      ]
+    },
+    {
+      "id": "word",
+      "title": "靈修",
+      "color": "#1f7a4d",
+      "icon": "📖",
+      "fields": [
+        {
+          "id": "passage",
+          "label": "今天默想的經文",
+          "kind": "short_text",
+          "options": [],
+          "pattern": null,
+          "placeholder": "例：尼希米記 4:15-23",
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        },
+        {
+          "id": "meditation",
+          "label": "這段話對我說了什麼？",
+          "kind": "text",
+          "options": [],
+          "pattern": null,
+          "placeholder": "主耶穌，這段經文讓我看見…",
+          "min_rows": 2,
+          "color": "#1f7a4d",
+          "hint": null
+        },
+        {
+          "id": "ask",
+          "label": "有沒有問過主：「主啊，我當怎麼做？」",
+          "kind": "choice",
+          "options": [
+            {
+              "id": "yes",
+              "label": "有"
+            },
+            {
+              "id": "no",
+              "label": "沒有"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        },
+        {
+          "id": "obey",
+          "label": "有沒有順服主所吩咐的？",
+          "kind": "choice",
+          "options": [
+            {
+              "id": "yes",
+              "label": "有"
+            },
+            {
+              "id": "no",
+              "label": "沒有"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        }
+      ]
+    },
+    {
+      "id": "review",
+      "title": "自省",
+      "color": "#22252a",
+      "icon": "🔍",
+      "fields": [
+        {
+          "id": "pleasing",
+          "label": "有沒有做過主喜悅的事？",
+          "kind": "choice",
+          "options": [
+            {
+              "id": "yes",
+              "label": "有"
+            },
+            {
+              "id": "no",
+              "label": "沒有"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        },
+        {
+          "id": "displeasing",
+          "label": "有沒有做過主不喜悅的事？",
+          "kind": "choice",
+          "options": [
+            {
+              "id": "yes",
+              "label": "有"
+            },
+            {
+              "id": "no",
+              "label": "沒有"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        },
+        {
+          "id": "looking",
+          "label": "一天仰望主的時間如何衡量？",
+          "kind": "scale",
+          "options": [
+            {
+              "id": "good",
+              "label": "滿意"
+            },
+            {
+              "id": "ok",
+              "label": "還可以"
+            },
+            {
+              "id": "low",
+              "label": "缺乏"
+            }
+          ],
+          "pattern": null,
+          "placeholder": null,
+          "min_rows": 2,
+          "color": null,
+          "hint": null
+        }
+      ]
+    },
+    {
+      "id": "thanks",
+      "title": "感恩事項",
+      "color": "#1f7a4d",
+      "icon": "🌱",
+      "fields": [
+        {
+          "id": "gratitude",
+          "label": "三件以上向神感恩的事",
+          "kind": "list",
+          "options": [],
+          "pattern": null,
+          "placeholder": "感謝神…",
+          "min_rows": 3,
+          "color": "#1f7a4d",
+          "hint": null
+        }
+      ]
+    },
+    {
+      "id": "pray",
+      "title": "代禱事項",
+      "color": "#c8322c",
+      "icon": "🕊",
+      "fields": [
+        {
+          "id": "prayer",
+          "label": "今天最重要、最緊急的代禱",
+          "kind": "list",
+          "options": [],
+          "pattern": null,
+          "placeholder": "求主帶領…",
+          "min_rows": 3,
+          "color": "#c8322c",
+          "hint": null
+        }
+      ]
+    }
+  ],
+  "order": 2,
+  "default_layout": "ledger"
+}
