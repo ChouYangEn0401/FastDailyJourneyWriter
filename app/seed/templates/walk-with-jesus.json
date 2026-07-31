@@ -144,7 +144,7 @@
           "kind": "short_text",
           "options": [],
           "pattern": null,
-          "placeholder": "例：尼希米記 4:15-23",
+          "placeholder": "例：書卷名 章:節",
           "min_rows": 2,
           "color": null,
           "hint": null
