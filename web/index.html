@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>每日靈修日記</title>
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <span class="mark">✎</span>
+    <div>
+      <strong>每日靈修日記</strong>
+      <small id="ai-status">…</small>
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button id="btn-new" class="ghost">＋ 新的一天</button>
+    <button id="btn-save" class="primary">儲存</button>
+    <span id="save-hint" class="hint"></span>
+  </div>
+</header>
+
+<main class="layout">
+
+  <!-- ── left rail ─────────────────────────────────────────── -->
+  <aside class="rail">
+    <section class="panel">
+      <h2>寫法範本</h2>
+      <p class="muted">挑一個最貼近你今天狀態的格式。多半只要勾一勾。</p>
+      <div id="template-list" class="template-list"></div>
+    </section>
+
+    <section class="panel">
+      <h2>版型</h2>
+      <p class="muted">版型是設計好的完成品，選了就是最後的樣子。不需要等、不需要 API。</p>
+      <div id="layout-list" class="template-list"></div>
+      <button id="btn-design" class="ghost small wide" disabled>＋ 用 AI 設計一個新版型</button>
+    </section>
+
+    <section class="panel">
+      <h2>紙張顏色</h2>
+      <div id="theme-list" class="theme-list"></div>
+    </section>
+
+    <section class="panel">
+      <h2>最近的日記</h2>
+      <div id="entry-list" class="entry-list"></div>
+    </section>
+  </aside>
+
+  <!-- ── editor ────────────────────────────────────────────── -->
+  <section class="editor" id="editor">
+    <div class="editor-head">
+      <div class="field-row">
+        <label for="entry-date">日期</label>
+        <input type="date" id="entry-date">
+      </div>
+      <div class="field-row grow">
+        <label for="entry-title">標題（可留白）</label>
+        <div class="with-button">
+          <input type="text" id="entry-title" placeholder="今天想給這一天一個名字…">
+          <button id="btn-title" class="ghost small" title="請 Claude 從內容取一個標題">AI 取名</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="palette-bar" id="palette-bar">
+      <span class="muted">換色：</span>
+      <div class="swatches" id="swatches"></div>
+      <input type="color" id="custom-color" value="#c8322c" title="自訂顏色">
+      <button class="ghost small" data-cmd="bold"><b>粗</b></button>
+      <button class="ghost small" data-cmd="clear">清除樣式</button>
+      <span class="hint">先選取文字，再點顏色。</span>
+    </div>
+
+    <div id="form"></div>
+
+    <div class="closing-block">
+      <h3>給主的話</h3>
+      <p class="muted">今天想對主說的一段話。也可以換色。</p>
+      <div class="rich tall" id="closing" contenteditable="true"
+           data-placeholder="親愛的主耶穌，今天…"></div>
+    </div>
+  </section>
+
+  <!-- ── export rail ───────────────────────────────────────── -->
+  <aside class="rail right">
+    <section class="panel">
+      <h2>輸出</h2>
+
+      <div class="opt">
+        <label class="check">
+          <input type="checkbox" id="opt-gift"> 加上可翻開的封面（送給別人）
+        </label>
+        <input type="text" id="opt-gift-msg" placeholder="封面上想說的一句話"
+               class="sub" disabled>
+      </div>
+
+      <div class="btn-row">
+        <button id="btn-preview-html" class="primary">預覽頁面</button>
+        <button id="btn-download-html" class="ghost">下載 HTML</button>
+      </div>
+
+      <hr>
+
+      <h3>日記卡片</h3>
+      <div class="opt inline">
+        <label for="opt-paper">紙</label>
+        <select id="opt-paper">
+          <option value="">跟著版型</option>
+          <option value="ruled">橫線</option>
+          <option value="grid">方格</option>
+          <option value="dotted">點陣</option>
+          <option value="plain">空白</option>
+        </select>
+        <label for="opt-width">寬</label>
+        <select id="opt-width">
+          <option value="1080">1080</option>
+          <option value="1200">1200</option>
+          <option value="1440">1440</option>
+        </select>
+      </div>
+      <div class="btn-row">
+        <button id="btn-card" class="primary">產生卡片</button>
+        <button id="btn-svg" class="ghost" disabled>下載 SVG</button>
+      </div>
+      <div class="btn-row" id="png-row">
+        <button class="ghost" data-scale="1" disabled>PNG ×1</button>
+        <button class="ghost" data-scale="2" disabled>PNG ×2</button>
+        <button class="ghost" data-scale="3" disabled>PNG ×3</button>
+      </div>
+      <div id="card-preview" class="card-preview"></div>
+
+      <hr>
+
+      <h3>今天畫一張圖</h3>
+      <div class="opt inline">
+        <label for="opt-style">畫風</label>
+        <select id="opt-style"></select>
+      </div>
+      <div class="btn-row">
+        <button id="btn-imgprompt" class="primary">產生繪圖 prompt</button>
+      </div>
+      <div id="prompt-out" class="prompt-out"></div>
+    </section>
+  </aside>
+</main>
+
+<dialog id="design-dialog" class="dialog">
+  <form method="dialog">
+    <h3>設計一個新版型</h3>
+    <p class="muted">
+      Claude 會設計出一個新版型並存成檔案。之後你、還有拿到這個檔案的人，
+      都可以直接用，不需要再呼叫 API。
+    </p>
+    <label class="dlg-label" for="design-name">名字</label>
+    <input type="text" id="design-name" placeholder="例：對開報紙">
+    <label class="dlg-label" for="design-base">從哪個版型變化</label>
+    <select id="design-base"></select>
+    <label class="dlg-label" for="design-brief">設計方向</label>
+    <input type="text" id="design-brief" placeholder="例：日期放右邊，全部置中，像報紙頭版">
+    <div class="btn-row dlg-actions">
+      <button value="cancel" class="ghost">取消</button>
+      <button value="go" id="design-go" class="primary">開始設計</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="toast" class="toast"></div>
+
+<script type="module" src="/static/app.js"></script>
+</body>
+</html>
