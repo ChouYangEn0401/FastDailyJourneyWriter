@@ -25,7 +25,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app import storage
 from app.config import PROJECT_ROOT, settings
-from app.routers import ai, entries, export, layouts, templates
+from app.routers import ai, entries, export, layouts, preferences, templates
 from app.seed_manager import install_seeds
 
 WEB_DIR = PROJECT_ROOT / "web"
@@ -47,6 +47,7 @@ app = FastAPI(
 
 app.include_router(templates.router)
 app.include_router(layouts.router)
+app.include_router(preferences.router)
 app.include_router(entries.router)
 app.include_router(export.router)
 app.include_router(ai.router)

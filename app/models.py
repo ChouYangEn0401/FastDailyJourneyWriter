@@ -146,6 +146,32 @@ class Entry(EntryBase):
 # --------------------------------------------------------------------------
 
 
+class PenColor(BaseModel):
+    """One swatch in the palette bar."""
+
+    hex: str
+    name: str = ""
+
+
+class Preferences(BaseModel):
+    """Personal setup, stored in ``data/preferences.json``.
+
+    Everyone settles into one or two question sets, a layout and a handful of
+    pen colours. This is where that settles, so it survives restarts and can
+    be carried to another machine as a single file.
+    """
+
+    palette: list[PenColor] = Field(default_factory=list)
+    template_id: str | None = None
+    layout: str | None = None
+    theme: str | None = None
+    card_paper: str | None = None
+    card_width: int = 1080
+    image_style: str = "watercolor"
+    #: Applied to new entries when set.
+    use_as_default: bool = True
+
+
 class ArtifactRequest(BaseModel):
     entry_id: int
     theme: str | None = None
