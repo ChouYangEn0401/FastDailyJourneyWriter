@@ -17,9 +17,9 @@
     </div>
   </div>
   <div class="topbar-actions">
+    <span id="save-hint" class="save-hint"></span>
     <button id="btn-new" class="ghost">＋ 新的一天</button>
     <button id="btn-save" class="primary">儲存</button>
-    <span id="save-hint" class="hint"></span>
   </div>
 </header>
 
@@ -28,16 +28,19 @@
   <!-- ── left rail ─────────────────────────────────────────── -->
   <aside class="rail">
     <section class="panel">
-      <h2>寫法範本</h2>
-      <p class="muted">挑一個最貼近你今天狀態的格式。多半只要勾一勾。</p>
+      <div class="panel-head">
+        <h2>題組</h2>
+        <button id="btn-new-tpl" class="ghost tiny">＋ 新增</button>
+      </div>
+      <p class="muted">今天要回答哪些問題。可以直接改，也可以自己建一個。</p>
       <div id="template-list" class="template-list"></div>
     </section>
 
     <section class="panel">
       <h2>版型</h2>
-      <p class="muted">版型是設計好的完成品，選了就是最後的樣子。不需要等、不需要 API。</p>
+      <p class="muted">「頁面」輸出時長什麼樣子。已經設計好了，不需要 API。</p>
       <div id="layout-list" class="template-list"></div>
-      <button id="btn-design" class="ghost small wide" disabled>＋ 用 AI 設計一個新版型</button>
+      <button id="btn-design" class="ghost tiny wide" disabled>＋ 用 AI 設計新版型</button>
     </section>
 
     <section class="panel">
@@ -46,7 +49,10 @@
     </section>
 
     <section class="panel">
-      <h2>最近的日記</h2>
+      <div class="panel-head">
+        <h2>最近的日記</h2>
+        <button id="btn-tidy" class="ghost tiny" hidden>清理空白</button>
+      </div>
       <div id="entry-list" class="entry-list"></div>
     </section>
   </aside>
@@ -68,13 +74,16 @@
     </div>
 
     <div class="palette-bar" id="palette-bar">
-      <span class="muted">換色：</span>
+      <span class="pal-label">換色</span>
       <div class="swatches" id="swatches"></div>
-      <input type="color" id="custom-color" value="#c8322c" title="自訂顏色">
-      <button class="ghost small" data-cmd="bold"><b>粗</b></button>
-      <button class="ghost small" data-cmd="clear">清除樣式</button>
-      <span class="hint">先選取文字，再點顏色。</span>
+      <button class="ghost tiny" id="btn-palette" title="新增或刪除顏色">管理顏色</button>
+      <span class="pal-sep"></span>
+      <button class="ghost tiny" data-cmd="bold"><b>粗體</b></button>
+      <button class="ghost tiny" data-cmd="clear">清除樣式</button>
+      <span class="hint">先選取文字，再點顏色</span>
     </div>
+
+    <div id="orphan-note" class="orphan-note" hidden></div>
 
     <div id="form"></div>
 
@@ -90,23 +99,54 @@
   <aside class="rail right">
     <section class="panel">
       <h2>輸出</h2>
+      <p class="muted">
+        同一篇日記，兩種形狀。頁面是可以捲動的長版，卡片是一張圖。
+      </p>
 
       <div class="opt">
         <label class="check">
-          <input type="checkbox" id="opt-gift"> 加上可翻開的封面（送給別人）
+          <input type="checkbox" id="opt-gift"> 加上可翻開的封面
         </label>
         <input type="text" id="opt-gift-msg" placeholder="封面上想說的一句話"
                class="sub" disabled>
       </div>
+    </section>
 
-      <div class="btn-row">
-        <button id="btn-preview-html" class="primary">預覽頁面</button>
-        <button id="btn-download-html" class="ghost">下載 HTML</button>
+    <!-- output A: page -->
+    <section class="panel out-card">
+      <div class="out-head">
+        <span class="out-icon page">▤</span>
+        <div>
+          <h3>頁面 · HTML</h3>
+          <p class="muted">單一檔案，可捲動、可列印、可傳給人開。</p>
+        </div>
       </div>
+      <p class="out-meta">目前版型：<b id="cur-layout">—</b>　<span class="hint">在左邊「版型」換</span></p>
+      <div class="btn-row">
+        <button id="btn-preview-html" class="primary">預覽</button>
+        <button id="btn-download-html" class="ghost">下載 .html</button>
+      </div>
+      <div id="html-preview" class="html-preview" hidden></div>
+    </section>
 
-      <hr>
-
-      <h3>日記卡片</h3>
+    <!-- output B: card -->
+    <section class="panel out-card">
+      <div class="out-head">
+        <span class="out-icon card">▣</span>
+        <div>
+          <h3>卡片 · 圖片</h3>
+          <p class="muted">一張圖，像日記本內頁。適合傳 LINE。</p>
+        </div>
+      </div>
+      <div class="opt inline">
+        <label for="opt-shape">形狀</label>
+        <select id="opt-shape">
+          <option value="1080">直式 1080（手機）</option>
+          <option value="1350">高一點 1350</option>
+          <option value="1600">寬版 1600（電腦看，比較扁）</option>
+          <option value="2000">超寬 2000</option>
+        </select>
+      </div>
       <div class="opt inline">
         <label for="opt-paper">紙</label>
         <select id="opt-paper">
@@ -116,15 +156,9 @@
           <option value="dotted">點陣</option>
           <option value="plain">空白</option>
         </select>
-        <label for="opt-width">寬</label>
-        <select id="opt-width">
-          <option value="1080">1080</option>
-          <option value="1200">1200</option>
-          <option value="1440">1440</option>
-        </select>
       </div>
       <div class="btn-row">
-        <button id="btn-card" class="primary">產生卡片</button>
+        <button id="btn-card" class="primary">產生預覽</button>
         <button id="btn-svg" class="ghost" disabled>下載 SVG</button>
       </div>
       <div class="btn-row" id="png-row">
@@ -133,22 +167,82 @@
         <button class="ghost" data-scale="3" disabled>PNG ×3</button>
       </div>
       <div id="card-preview" class="card-preview"></div>
+    </section>
 
-      <hr>
-
-      <h3>今天畫一張圖</h3>
+    <!-- output C: drawing prompt -->
+    <section class="panel out-card">
+      <div class="out-head">
+        <span class="out-icon draw">✧</span>
+        <div>
+          <h3>今天畫一張圖</h3>
+          <p class="muted">把今天變成一段可以貼給繪圖工具的 prompt。</p>
+        </div>
+      </div>
       <div class="opt inline">
         <label for="opt-style">畫風</label>
         <select id="opt-style"></select>
       </div>
       <div class="btn-row">
-        <button id="btn-imgprompt" class="primary">產生繪圖 prompt</button>
+        <button id="btn-imgprompt" class="primary">產生 prompt</button>
       </div>
       <div id="prompt-out" class="prompt-out"></div>
+    </section>
+
+    <section class="panel">
+      <button id="btn-remember" class="ghost wide">記住目前的設定</button>
+      <p class="muted mt">
+        把題組、版型、顏色、卡片設定記起來，下次開啟直接沿用。
+      </p>
     </section>
   </aside>
 </main>
 
+<!-- ── palette manager ───────────────────────────────────── -->
+<dialog id="palette-dialog" class="dialog">
+  <h3>管理顏色</h3>
+  <p class="muted">這是你的筆。加自己常用的，用不到的就刪掉。</p>
+  <div id="palette-editor" class="palette-editor"></div>
+  <div class="pal-add">
+    <input type="color" id="pal-new-hex" value="#c8322c">
+    <input type="text" id="pal-new-name" placeholder="名字（可留白）">
+    <button id="pal-add" class="ghost">＋ 加入</button>
+  </div>
+  <div class="btn-row dlg-actions">
+    <button id="pal-reset" class="ghost">還原預設</button>
+    <button id="pal-close" class="primary">完成</button>
+  </div>
+</dialog>
+
+<!-- ── template editor ───────────────────────────────────── -->
+<dialog id="tpl-dialog" class="dialog wide-dialog">
+  <div class="dlg-head">
+    <h3 id="tpl-dlg-title">編輯題組</h3>
+    <button id="tpl-close" class="ghost tiny">✕</button>
+  </div>
+
+  <div class="tpl-meta">
+    <div>
+      <label class="dlg-label" for="tpl-name">名稱</label>
+      <input type="text" id="tpl-name" placeholder="例：我的每日三問">
+    </div>
+    <div>
+      <label class="dlg-label" for="tpl-desc">一句話說明</label>
+      <input type="text" id="tpl-desc" placeholder="什麼時候會用這個">
+    </div>
+  </div>
+
+  <div id="tpl-sections" class="tpl-sections"></div>
+  <button id="tpl-add-section" class="ghost wide">＋ 加一個段落</button>
+
+  <div class="btn-row dlg-actions">
+    <button id="tpl-delete" class="danger">刪除這個題組</button>
+    <span class="spacer"></span>
+    <button id="tpl-cancel" class="ghost">取消</button>
+    <button id="tpl-save" class="primary">儲存</button>
+  </div>
+</dialog>
+
+<!-- ── AI layout designer ────────────────────────────────── -->
 <dialog id="design-dialog" class="dialog">
   <form method="dialog">
     <h3>設計一個新版型</h3>
