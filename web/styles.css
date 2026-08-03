@@ -1,21 +1,44 @@
 :root{
+  color-scheme: light;
   --bg:#f2efe9;
   --panel:#fbf9f5;
   --panel-2:#ffffff;
   --ink:#26282c;
-  --muted:#7d7a72;
-  --line:#e4dfd4;
-  --accent:#b5623c;
+  /* Secondary text carries real information here (field labels, template
+     descriptions, entry word counts), so it is held at roughly 5:1 against
+     its panel rather than the usual decorative grey. */
+  --muted:#6b675e;
+  --line:#ddd7ca;
+  --accent:#a8542f;
   --accent-soft:#f0e0d7;
-  --ok:#1f7a4d;
+  --ok:#1a6b43;
+  --danger:#a03028;
   --radius:12px;
   --sans:"Noto Sans TC","PingFang TC","Microsoft JhengHei",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   --serif:"Noto Serif TC","Songti TC","PingFang TC",Georgia,serif;
+
+  /* The surface you actually write on. Answers can be coloured like ink on
+     paper (a template's default field colour, or a hand-picked pen colour),
+     and those hexes are chosen assuming pale paper — the same assumption the
+     exported HTML/card makes. So this surface stays pale in both light and
+     dark mode; only the app's own chrome (panels, buttons, selects) follows
+     the system theme. Without this split, a dark ink such as "墨黑" (#22252a,
+     the first swatch in the palette bar) becomes nearly indistinguishable
+     from a dark-mode input background and typed text effectively vanishes.
+     Deliberately NOT redeclared in the dark media query below. */
+  --paper:#fffefb;
+  --paper-ink:#26282c;
+  --paper-muted:#847f72;
+  --paper-line:#e4dfd4;
 }
 @media (prefers-color-scheme: dark){
   :root{
+    color-scheme: dark;
     --bg:#15171b;--panel:#1c1f24;--panel-2:#22262c;--ink:#e8e5df;
-    --muted:#969ba3;--line:#2f343b;--accent-soft:#3a2a22;
+    /* Lifted from #969ba3 — the old value sat near 3.9:1 on --panel, which is
+       below AA for the small type these labels actually use. */
+    --muted:#aab0b9;--line:#3a4049;--accent:#d98757;--accent-soft:#3a2a22;
+    --ok:#4fb383;--danger:#e0685e;
   }
 }
 
@@ -98,29 +121,130 @@ button.small{padding:.2rem .6rem;font-size:.8rem;}
 .tpl .badges{display:flex;flex-wrap:wrap;gap:.2rem;margin-top:.3rem;}
 .tpl .badges em{
   font-style:normal;font-size:.68rem;padding:.02rem .4rem;border-radius:4px;
-  background:color-mix(in srgb,var(--ink) 7%,transparent);color:var(--muted);
+  background:color-mix(in srgb,var(--ink) 10%,transparent);color:var(--ink);
 }
 button.wide{width:100%;margin-top:.5rem;}
+button.tiny{padding:.15rem .5rem;font-size:.75rem;border-radius:6px;}
+button.danger{
+  background:transparent;color:var(--danger);border:1px solid var(--danger);
+  padding:.4rem .9rem;border-radius:8px;
+}
+.panel-head{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem;}
+.panel-head h2{margin-bottom:.35rem;}
+.spacer{flex:1;}
+.mt{margin-top:.6rem;margin-bottom:0;}
 
-/* ---- design dialog ---- */
+/* template row = pick button + edit pencil */
+.tpl-row{display:flex;gap:.25rem;align-items:stretch;}
+.tpl-row .tpl{flex:1;min-width:0;}
+.tpl-edit{
+  flex:none;width:1.9rem;border:1px solid var(--line);border-radius:8px;
+  background:var(--panel-2);color:var(--muted);font-size:.85rem;
+}
+.tpl-edit:hover{color:var(--accent);border-color:var(--accent);}
+
+/* ---- dialogs ---- */
 .dialog{
   border:1px solid var(--line);border-radius:var(--radius);background:var(--panel);
   color:var(--ink);padding:1.4rem;max-width:26rem;width:calc(100vw - 2rem);
 }
-.dialog::backdrop{background:rgba(0,0,0,.45);}
+.dialog.wide-dialog{max-width:46rem;max-height:88vh;overflow:auto;}
+.dialog::backdrop{background:rgba(0,0,0,.55);}
 .dialog h3{margin-top:0;}
+.dlg-head{display:flex;justify-content:space-between;align-items:center;}
 .dlg-label{display:block;font-size:.74rem;letter-spacing:.1em;color:var(--muted);
            margin:.7rem 0 .2rem;}
-.dlg-actions{margin-top:1.2rem;margin-bottom:0;}
+.dlg-actions{margin-top:1.2rem;margin-bottom:0;align-items:center;}
 
-.entry-list{display:flex;flex-direction:column;gap:.3rem;max-height:320px;overflow:auto;}
+/* ---- palette manager ---- */
+.palette-editor{display:flex;flex-direction:column;gap:.35rem;margin:.8rem 0;}
+.pal-row{display:flex;align-items:center;gap:.5rem;}
+.pal-chip{width:22px;height:22px;border-radius:50%;flex:none;
+          box-shadow:0 0 0 1px var(--line);}
+.pal-row input[type=text]{flex:1;}
+.pal-hex{font-size:.72rem;color:var(--muted);font-variant-numeric:tabular-nums;}
+.pal-add{display:flex;gap:.4rem;align-items:center;
+         border-top:1px solid var(--line);padding-top:.8rem;}
+.pal-add input[type=text]{flex:1;}
+
+/* ---- template editor ---- */
+.tpl-meta{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+@media (max-width:620px){ .tpl-meta{grid-template-columns:1fr;} }
+.tpl-sections{display:flex;flex-direction:column;gap:.9rem;margin:1.1rem 0 .8rem;}
+.tpl-section{
+  border:1px solid var(--line);border-left:3px solid var(--sec,var(--accent));
+  border-radius:10px;padding:.7rem;background:var(--panel-2);
+}
+.tpl-sec-head{display:flex;gap:.4rem;align-items:center;margin-bottom:.6rem;}
+.tpl-sec-head input[type=text]{flex:1;}
+.tpl-icon{max-width:4rem;text-align:center;}
+.tpl-field{
+  display:grid;grid-template-columns:1fr 12rem auto;gap:.4rem;align-items:center;
+  padding:.4rem 0;border-top:1px dashed var(--line);
+}
+@media (max-width:620px){ .tpl-field{grid-template-columns:1fr auto;} }
+.tpl-field .tpl-pattern,.tpl-field .tpl-opts{grid-column:1/-1;}
+.tpl-opts{display:flex;flex-wrap:wrap;gap:.3rem;align-items:center;}
+.tpl-opt{display:inline-flex;align-items:center;gap:.15rem;
+         border:1px solid var(--line);border-radius:999px;padding:.05rem .2rem .05rem .5rem;}
+.tpl-opt input{border:none;background:none;width:auto;padding:0;font-size:.82rem;}
+.tpl-opt button{border:none;background:none;color:var(--muted);font-size:.72rem;padding:0 .3rem;}
+
+/* ---- entries ---- */
+.entry-list{display:flex;flex-direction:column;gap:.15rem;max-height:320px;overflow:auto;}
+.ent-row{display:flex;align-items:stretch;gap:.15rem;}
 .ent{
-  text-align:left;background:none;border:none;border-left:2px solid transparent;
-  padding:.3rem .5rem;border-radius:0 6px 6px 0;color:var(--ink);font-size:.85rem;
+  flex:1;min-width:0;text-align:left;background:none;border:none;
+  border-left:2px solid transparent;padding:.3rem .5rem;border-radius:0 6px 6px 0;
+  color:var(--ink);font-size:.85rem;display:grid;
+  grid-template-columns:1fr auto;gap:0 .4rem;
 }
 .ent:hover{background:var(--panel-2);}
 .ent[aria-pressed="true"]{border-left-color:var(--accent);background:var(--panel-2);}
-.ent span{display:block;color:var(--muted);font-size:.74rem;}
+.ent-date{font-size:.74rem;color:var(--muted);}
+.ent-meta{font-size:.7rem;color:var(--muted);text-align:right;align-self:center;
+          grid-row:1/3;}
+.ent-title{grid-column:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ent-del{
+  flex:none;border:none;background:none;color:var(--muted);
+  padding:0 .35rem;border-radius:6px;font-size:.75rem;
+}
+.ent-del:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent);}
+
+/* ---- orphan note ---- */
+.orphan-note{
+  border:1px solid color-mix(in srgb,var(--accent) 40%,var(--line));
+  background:color-mix(in srgb,var(--accent) 8%,transparent);
+  border-radius:10px;padding:.6rem .8rem;margin-bottom:1rem;font-size:.82rem;
+}
+.orphan-note b{display:block;}
+.orphan-note span{color:var(--muted);font-size:.78rem;}
+.orphan-note ul{margin:.4rem 0 0;padding-left:1.1rem;color:var(--muted);}
+
+/* ---- output cards ---- */
+.out-card{padding:.9rem 1rem;}
+.out-head{display:flex;gap:.6rem;align-items:flex-start;margin-bottom:.6rem;}
+.out-head h3{margin:0 0 .1rem;font-size:.95rem;}
+.out-head .muted{margin:0;font-size:.78rem;}
+.out-icon{
+  flex:none;width:1.9rem;height:1.9rem;border-radius:8px;display:grid;
+  place-items:center;color:#fff;font-size:.9rem;
+}
+.out-icon.page{background:#2456b8;}
+.out-icon.card{background:#1f7a4d;}
+.out-icon.draw{background:#8a5fbf;}
+.out-meta{font-size:.78rem;color:var(--muted);margin:.2rem 0 .6rem;}
+.out-meta b{color:var(--ink);}
+.html-preview{margin-top:.6rem;}
+.html-preview iframe{
+  width:100%;height:300px;border:1px solid var(--line);border-radius:8px;
+  background:#fff;display:block;
+}
+
+.save-hint{font-size:.76rem;color:var(--muted);}
+.save-hint.ok{color:var(--ok);}
+.save-hint.err{color:var(--danger);}
+.save-hint.dirty{color:var(--accent);}
 
 /* ---- editor ---- */
 .editor{
@@ -137,6 +261,12 @@ input[type=text],input[type=date],select,.sub{
   background:var(--panel-2);border:1px solid var(--line);border-radius:8px;
   padding:.42rem .65rem;width:100%;
 }
+/* A <select>'s open dropdown is native chrome, not something this stylesheet
+   otherwise reaches — without `color-scheme` (set on :root above) and an
+   explicit colour pair here, some browsers render the popup list in the
+   OS's own light/dark theme instead of ours, which can make the option text
+   unreadable against its own background. */
+option{background:var(--panel-2);color:var(--ink);}
 input:focus-visible,select:focus-visible,.rich:focus-visible,button:focus-visible{
   outline:2px solid var(--accent);outline-offset:2px;
 }
@@ -147,11 +277,14 @@ input:focus-visible,select:focus-visible,.rich:focus-visible,button:focus-visibl
   border-radius:10px;padding:.4rem .6rem;margin-bottom:1.2rem;
 }
 .palette-bar .muted{margin:0;}
+.pal-label{font-size:.76rem;color:var(--muted);}
+.pal-sep{width:1px;height:1.1rem;background:var(--line);}
 .swatches{display:flex;gap:.3rem;}
 .sw{width:22px;height:22px;border-radius:50%;border:2px solid var(--panel-2);
     box-shadow:0 0 0 1px var(--line);padding:0;}
+.sw:hover{transform:scale(1.12);}
 input[type=color]{width:30px;height:26px;padding:0;border:1px solid var(--line);
-                  border-radius:6px;background:none;}
+                  border-radius:6px;background:none;flex:none;}
 
 /* ---- generated form ---- */
 .sec{margin-bottom:1.8rem;}
@@ -174,22 +307,27 @@ input[type=color]{width:30px;height:26px;padding:0;border:1px solid var(--line);
   color:#fff;font-weight:600;
 }
 .rich{
-  background:var(--panel-2);border:1px solid var(--line);border-radius:8px;
+  background:var(--paper);color:var(--paper-ink);
+  border:1px solid var(--paper-line);border-radius:8px;
   padding:.5rem .7rem;min-height:2.6rem;line-height:1.9;overflow-wrap:anywhere;
 }
 .rich.tall{min-height:8rem;}
-.rich:empty::before{content:attr(data-placeholder);color:var(--muted);}
+.rich:empty::before{content:attr(data-placeholder);color:var(--paper-muted);}
 .list-row{display:flex;gap:.4rem;align-items:flex-start;margin-bottom:.35rem;}
 .list-row .num{
   flex:none;width:1.5rem;height:1.5rem;border-radius:50%;font-size:.72rem;
   display:grid;place-items:center;margin-top:.35rem;
-  background:color-mix(in srgb,var(--sec,var(--accent)) 15%,transparent);
+  /* Mixed onto the fixed paper colour, not the app's own (possibly dark)
+     background — otherwise a dark section colour reads as a dark number on
+     a dark badge, same failure as the .rich fix above. */
+  background:color-mix(in srgb,var(--sec,var(--accent)) 18%,var(--paper));
   color:var(--sec,var(--accent));font-weight:600;
 }
 .list-row .rich{flex:1;}
 .list-row .del{border:none;background:none;color:var(--muted);padding:.2rem .35rem;}
 .fill-line{
-  background:var(--panel-2);border:1px solid var(--line);border-radius:8px;
+  background:var(--paper);color:var(--paper-ink);
+  border:1px solid var(--paper-line);border-radius:8px;
   padding:.5rem .7rem;line-height:2.2;
 }
 .fill-line .blank{
