@@ -54,6 +54,8 @@
         <button id="btn-tidy" class="ghost tiny" hidden>清理空白</button>
       </div>
       <div id="entry-list" class="entry-list"></div>
+      <button id="btn-safety" class="ghost tiny wide">🛡 備份與垃圾桶</button>
+      <p class="muted mt safety-line" id="safety-line"></p>
     </section>
   </aside>
 
@@ -69,6 +71,7 @@
         <div class="with-button">
           <input type="text" id="entry-title" placeholder="今天想給這一天一個名字…">
           <button id="btn-title" class="ghost small" title="請 Claude 從內容取一個標題">AI 取名</button>
+          <button id="btn-history" class="ghost small" title="看這篇的歷史版本" disabled>歷史</button>
         </div>
       </div>
     </div>
@@ -240,6 +243,57 @@
     <button id="tpl-cancel" class="ghost">取消</button>
     <button id="tpl-save" class="primary">儲存</button>
   </div>
+</dialog>
+
+<!-- ── entry history ─────────────────────────────────────── -->
+<dialog id="history-dialog" class="dialog">
+  <div class="dlg-head">
+    <h3>這篇的歷史版本</h3>
+    <button id="history-close" class="ghost tiny">✕</button>
+  </div>
+  <p class="muted">
+    每次存檔在內容變短之前，都會先留一份。挑一個版本按「還原」就會回到那時候的樣子——
+    還原本身也會先備份，所以按錯了也回得來。
+  </p>
+  <div id="history-list" class="history-list"></div>
+</dialog>
+
+<!-- ── backups / trash / export ──────────────────────────── -->
+<dialog id="safety-dialog" class="dialog wide-dialog">
+  <div class="dlg-head">
+    <h3>備份與垃圾桶</h3>
+    <button id="safety-close" class="ghost tiny">✕</button>
+  </div>
+
+  <section class="safety-sec">
+    <h4>垃圾桶</h4>
+    <p class="muted">刪掉的日記會留在這裡，可以救回來。</p>
+    <div id="trash-list" class="history-list"></div>
+  </section>
+
+  <section class="safety-sec">
+    <h4>整個資料庫的備份</h4>
+    <p class="muted">
+      開啟程式時會自動留一份，做危險的動作前也會。還原之前一樣會先幫你備份現況。
+    </p>
+    <div class="btn-row">
+      <button id="btn-make-backup" class="primary">現在備份一份</button>
+    </div>
+    <div id="backup-list" class="history-list"></div>
+  </section>
+
+  <section class="safety-sec">
+    <h4>搬到別台電腦</h4>
+    <p class="muted">
+      匯出成一個 JSON 檔，裡面有日記、題組、版型和你的設定。
+      匯入預設是「合併」，只會增加，不會蓋掉原本的東西。
+    </p>
+    <div class="btn-row">
+      <button id="btn-export" class="ghost">匯出全部</button>
+      <button id="btn-import" class="ghost">匯入檔案</button>
+      <input type="file" id="import-file" accept="application/json" hidden>
+    </div>
+  </section>
 </dialog>
 
 <!-- ── AI layout designer ────────────────────────────────── -->

@@ -28,6 +28,7 @@ const state = {
   layout: "letter",
   aiAvailable: false,
   entryId: null,
+  updatedAt: null,
   answers: {},
   fieldColors: {},
   lastSvg: null,
@@ -372,7 +373,7 @@ function setSaveHint(text, cls = "") {
 }
 
 function buildPayload() {
-  return {
+  const payload = {
     entry_date: $("#entry-date").value || today(),
     title: $("#entry-title").value,
     template_id: state.template.id,
@@ -382,6 +383,12 @@ function buildPayload() {
     closing: $("#closing").innerHTML,
     field_colors: state.fieldColors,
   };
+  // Tells the server what we last read, so it can refuse rather than
+  // overwrite if another tab has since saved something newer.
+  if (state.entryId && state.updatedAt) {
+    payload.expected_updated_at = state.updatedAt;
+  }
+  return payload;
 }
 
 async function save(silent = false) {
@@ -410,16 +417,42 @@ async function save(silent = false) {
         });
     state.entryId = entry.id;
     state.answers = entry.answers;
+    state.updatedAt = entry.updated_at;
     state.dirty = false;
+    $("#btn-history").disabled = false;
     setSaveHint(`已儲存 ${new Date().toTimeString().slice(0, 5)}`, "ok");
     if (!silent) toast("已儲存");
     await loadEntries();
     refreshOrphanNote();
   } catch (err) {
+    state.saving = false;
+    if (/被改過/.test(err.message)) {
+      await handleConflict();
+      return;
+    }
     setSaveHint("儲存失敗", "err");
     toast(`儲存失敗：${err.message}`, true);
   } finally {
     state.saving = false;
+  }
+}
+
+/** Another tab saved first. Never resolve this silently. */
+async function handleConflict() {
+  setSaveHint("有衝突", "err");
+  const keepMine = confirm(
+    "這篇日記在別的地方被改過了（可能是另一個分頁開著）。\n\n" +
+      "按「確定」用你這邊的版本覆蓋過去（舊版本仍會留在歷史裡，可以還原）。\n" +
+      "按「取消」放棄這邊的修改，載入比較新的版本。"
+  );
+  if (keepMine) {
+    const latest = await api(`/api/entries/${state.entryId}`);
+    state.updatedAt = latest.updated_at;
+    await save(true);
+    toast("已用你的版本覆蓋，舊版本留在「歷史」裡");
+  } else {
+    applyEntry(await api(`/api/entries/${state.entryId}`));
+    toast("已載入比較新的版本");
   }
 }
 
@@ -518,7 +551,8 @@ async function deleteEntry(entry) {
   await api(`/api/entries/${entry.id}`, { method: "DELETE" });
   if (state.entryId === entry.id) newEntry();
   await loadEntries();
-  toast("已刪除");
+  await refreshSafety();
+  toast("已刪除（可以從「備份與垃圾桶」救回來）");
 }
 
 async function tidyEmpty() {
@@ -533,8 +567,10 @@ async function tidyEmpty() {
 
 function applyEntry(entry) {
   state.entryId = entry.id;
+  state.updatedAt = entry.updated_at;
   state.answers = entry.answers || {};
   state.fieldColors = entry.field_colors || {};
+  $("#btn-history").disabled = false;
   state.theme = entry.theme;
   state.layout = entry.layout || "letter";
   state.template =
@@ -558,8 +594,10 @@ async function openEntry(id) {
 
 function newEntry() {
   state.entryId = null;
+  state.updatedAt = null;
   state.answers = {};
   state.fieldColors = {};
+  $("#btn-history").disabled = true;
   $("#entry-date").value = today();
   $("#entry-title").value = "";
   $("#closing").innerHTML = "";
@@ -1220,6 +1258,199 @@ async function makeImagePrompt() {
   );
 }
 
+// --------------------------------------------------- history / trash / backup
+
+const REASON_LABEL = {
+  edit: "存檔前",
+  delete: "刪除前",
+  restore: "還原前",
+  import: "匯入前",
+};
+
+function timeLabel(iso) {
+  return String(iso).replace("T", " ").slice(0, 16);
+}
+
+function safetyRow(title, sub, actions) {
+  const row = document.createElement("div");
+  row.className = "hist-row";
+  const text = document.createElement("div");
+  text.className = "hist-text";
+  const b = document.createElement("b");
+  b.textContent = title;
+  const s = document.createElement("span");
+  s.textContent = sub;
+  text.append(b, s);
+  row.append(text);
+  const box = document.createElement("div");
+  box.className = "hist-actions";
+  for (const [label, cls, fn] of actions) {
+    const btn = document.createElement("button");
+    btn.className = cls;
+    btn.textContent = label;
+    btn.addEventListener("click", fn);
+    box.append(btn);
+  }
+  row.append(box);
+  return row;
+}
+
+async function openHistory() {
+  if (!state.entryId) return;
+  if (state.dirty) await save(true);
+  const list = $("#history-list");
+  list.replaceChildren();
+  const revs = await api(`/api/entries/${state.entryId}/revisions`);
+  if (!revs.length) {
+    const p = document.createElement("p");
+    p.className = "muted";
+    p.textContent = "還沒有歷史版本。內容變短或過一段時間再存檔時就會留一份。";
+    list.append(p);
+  }
+  for (const rev of revs) {
+    list.append(
+      safetyRow(
+        `${timeLabel(rev.created_at)}　${rev.char_count} 字`,
+        `${REASON_LABEL[rev.reason] || rev.reason}的版本` +
+          (rev.title ? `　「${rev.title}」` : ""),
+        [
+          ["還原", "ghost tiny", async () => {
+            if (!confirm(`把這篇還原成 ${timeLabel(rev.created_at)} 的版本？\n` +
+                         `目前的內容會先存成一個新的歷史版本，可以再換回來。`)) return;
+            const entry = await api(
+              `/api/entries/revisions/${rev.id}/restore`, { method: "POST" }
+            );
+            applyEntry(entry);
+            $("#history-dialog").close();
+            await loadEntries();
+            toast("已還原");
+          }],
+        ]
+      )
+    );
+  }
+  $("#history-dialog").showModal();
+}
+
+async function refreshSafety() {
+  const status = await api("/api/backup/status");
+  const line = $("#safety-line");
+  line.textContent =
+    `${status.entries} 篇日記　${status.backups} 份備份` +
+    (status.trash ? `　垃圾桶 ${status.trash}` : "");
+  return status;
+}
+
+async function openSafety() {
+  await Promise.all([renderTrash(), renderBackups()]);
+  $("#safety-dialog").showModal();
+}
+
+async function renderTrash() {
+  const list = $("#trash-list");
+  list.replaceChildren();
+  const trash = await api("/api/backup/trash");
+  if (!trash.length) {
+    const p = document.createElement("p");
+    p.className = "muted";
+    p.textContent = "垃圾桶是空的。";
+    list.append(p);
+    return;
+  }
+  for (const item of trash) {
+    list.append(
+      safetyRow(
+        `${item.entry_date}　${item.title || "（未命名）"}`,
+        `${item.char_count} 字　${timeLabel(item.deleted_at)} 刪除`,
+        [
+          ["救回來", "primary tiny", async () => {
+            const entry = await api(
+              `/api/backup/trash/${item.entry_id}/restore`, { method: "POST" }
+            );
+            applyEntry(entry);
+            await Promise.all([loadEntries(), renderTrash(), refreshSafety()]);
+            toast("已救回");
+          }],
+          ["永久刪除", "ghost tiny", async () => {
+            if (!confirm(
+              `永久刪除 ${item.entry_date}「${item.title || "未命名"}」？\n` +
+              `這 ${item.char_count} 個字之後就真的救不回來了。`
+            )) return;
+            await api(`/api/backup/trash/${item.entry_id}?confirm=true`, {
+              method: "DELETE",
+            });
+            await Promise.all([renderTrash(), refreshSafety()]);
+            toast("已永久刪除");
+          }],
+        ]
+      )
+    );
+  }
+}
+
+async function renderBackups() {
+  const list = $("#backup-list");
+  list.replaceChildren();
+  const backups = await api("/api/backup/list");
+  for (const b of backups.slice(0, 15)) {
+    const kb = Math.round(b.size_bytes / 1024);
+    list.append(
+      safetyRow(
+        timeLabel(b.created_at),
+        `${kb} KB　${b.automatic ? "自動" : "手動（不會被清掉）"}`,
+        [
+          ["還原", "ghost tiny", async () => {
+            if (!confirm(
+              `把整個資料庫還原成 ${timeLabel(b.created_at)} 的狀態？\n\n` +
+              `目前的資料會先自動備份一份，所以這個動作也可以再還原回來。`
+            )) return;
+            const r = await api(`/api/backup/restore/${b.name}`, { method: "POST" });
+            await Promise.all([loadEntries(), renderBackups(), renderTrash(), refreshSafety()]);
+            newEntry();
+            toast(`已還原，現在有 ${r.entries_now} 篇日記`);
+          }],
+        ]
+      )
+    );
+  }
+}
+
+async function exportAll() {
+  const res = await fetch("/api/backup/export");
+  const blob = await res.blob();
+  download(`journal-export-${today()}.json`, blob);
+  toast("已匯出。建議存到雲端或隨身碟。");
+}
+
+async function importFile(file) {
+  let document_;
+  try {
+    document_ = JSON.parse(await file.text());
+  } catch {
+    toast("這個檔案不是有效的 JSON。", true);
+    return;
+  }
+  const replace = confirm(
+    "要怎麼匯入？\n\n" +
+      "「確定」＝取代：先清掉現在的日記，再匯入（會先自動備份）。\n" +
+      "「取消」＝合併：保留現在的，把新的加進來（比較安全，建議這個）。"
+  );
+  const r = await api("/api/backup/import", {
+    method: "POST",
+    body: JSON.stringify({ document: document_, replace }),
+  });
+  await Promise.all([loadEntries(), refreshSafety()]);
+  state.templates = await api("/api/templates");
+  state.layouts = await api("/api/layouts");
+  renderTemplatePicker();
+  renderLayoutPicker();
+  toast(
+    `匯入完成：日記 ${r.entries} 篇` +
+      (r.skipped_entries ? `（略過重複 ${r.skipped_entries}）` : "") +
+      `，題組 ${r.templates}，版型 ${r.layouts}`
+  );
+}
+
 // ------------------------------------------------- optional layout designer
 
 function openDesignDialog() {
@@ -1359,6 +1590,24 @@ function wire() {
     if (e.target.returnValue === "go") runDesign();
   });
 
+  const guard = (fn) => () => fn().catch((e) => toast(e.message, true));
+  $("#btn-history").addEventListener("click", guard(openHistory));
+  $("#history-close").addEventListener("click", () => $("#history-dialog").close());
+  $("#btn-safety").addEventListener("click", guard(openSafety));
+  $("#safety-close").addEventListener("click", () => $("#safety-dialog").close());
+  $("#btn-make-backup").addEventListener("click", guard(async () => {
+    const b = await api("/api/backup/create", { method: "POST" });
+    await Promise.all([renderBackups(), refreshSafety()]);
+    toast(`已備份（${Math.round(b.size_bytes / 1024)} KB）`);
+  }));
+  $("#btn-export").addEventListener("click", guard(exportAll));
+  $("#btn-import").addEventListener("click", () => $("#import-file").click());
+  $("#import-file").addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (file) importFile(file).catch((err) => toast(err.message, true));
+  });
+
   window.addEventListener("beforeunload", (e) => {
     if (state.dirty) {
       e.preventDefault();
@@ -1427,6 +1676,7 @@ async function init() {
     buildForm();
   }
   await loadEntries();
+  await refreshSafety();
 }
 
 init().catch((err) => toast(`啟動失敗：${err.message}`, true));

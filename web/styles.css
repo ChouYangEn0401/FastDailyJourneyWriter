@@ -241,6 +241,24 @@ button.danger{
   background:#fff;display:block;
 }
 
+/* ---- history / trash / backups ---- */
+.history-list{display:flex;flex-direction:column;gap:.3rem;max-height:15rem;
+              overflow:auto;margin-top:.5rem;}
+.hist-row{
+  display:flex;align-items:center;gap:.6rem;justify-content:space-between;
+  border:1px solid var(--line);border-radius:8px;padding:.4rem .6rem;
+  background:var(--panel-2);
+}
+.hist-text{min-width:0;}
+.hist-text b{display:block;font-size:.84rem;font-weight:600;}
+.hist-text span{display:block;font-size:.74rem;color:var(--muted);}
+.hist-actions{display:flex;gap:.3rem;flex:none;}
+.safety-sec{margin-bottom:1.4rem;}
+.safety-sec h4{margin:0 0 .2rem;font-family:var(--serif);font-size:.95rem;}
+.safety-sec .muted{margin-bottom:.3rem;}
+.safety-line{font-size:.72rem;margin-top:.4rem;}
+button.primary.tiny{padding:.15rem .55rem;font-size:.75rem;border-radius:6px;}
+
 .save-hint{font-size:.76rem;color:var(--muted);}
 .save-hint.ok{color:var(--ok);}
 .save-hint.err{color:var(--danger);}
