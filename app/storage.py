@@ -106,6 +106,30 @@ def get_entry(entry_id: int) -> Entry | None:
     return _row_to_entry(row) if row else None
 
 
+def get_entry_by_date(entry_date: date) -> Entry | None:
+    """The most recently touched entry for a day.
+
+    The editor uses this on startup so reopening the app continues the day you
+    were already writing, instead of silently starting a second entry for it.
+    """
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM entries WHERE entry_date = ? "
+            "ORDER BY updated_at DESC, id DESC LIMIT 1",
+            (entry_date.isoformat(),),
+        ).fetchone()
+    return _row_to_entry(row) if row else None
+
+
+def count_entries_on(entry_date: date) -> int:
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT COUNT(*) AS n FROM entries WHERE entry_date = ?",
+            (entry_date.isoformat(),),
+        ).fetchone()
+    return int(row["n"])
+
+
 def list_entries(limit: int = 100, offset: int = 0) -> list[Entry]:
     with _connect() as conn:
         rows = conn.execute(
