@@ -1,10 +1,15 @@
 # --- Personal / private journal material: NEVER commit ---
 # Reference material used while designing the app (photos of handwritten
 # journals, friends' journal samples). Kept locally, never in git.
+#
+# Images are blanket-ignored so a screenshot of a real entry can never be
+# committed by accident. The documentation images are the one exception, and
+# they are generated from invented sample content — see docs/images/README.md.
 *.jpg
 *.jpeg
 *.png
 *.heic
+!docs/images/*.png
 sample*.txt
 vv
 notes.private.*
