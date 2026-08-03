@@ -25,7 +25,16 @@ from fastapi.staticfiles import StaticFiles
 
 from app import storage
 from app.config import PROJECT_ROOT, settings
-from app.routers import ai, entries, export, layouts, preferences, templates
+from app import backup as backup_service
+from app.routers import (
+    ai,
+    backup,
+    entries,
+    export,
+    layouts,
+    preferences,
+    templates,
+)
 from app.seed_manager import install_seeds
 
 WEB_DIR = PROJECT_ROOT / "web"
@@ -35,6 +44,9 @@ WEB_DIR = PROJECT_ROOT / "web"
 async def lifespan(_: FastAPI):
     install_seeds()
     storage.init_db()
+    # A rolling copy of the database, so a bad code change can never be the
+    # last word on someone's journal.
+    backup_service.snapshot_if_stale("startup")
     yield
 
 
@@ -48,6 +60,7 @@ app = FastAPI(
 app.include_router(templates.router)
 app.include_router(layouts.router)
 app.include_router(preferences.router)
+app.include_router(backup.router)
 app.include_router(entries.router)
 app.include_router(export.router)
 app.include_router(ai.router)

@@ -24,6 +24,7 @@ class Settings:
     exports_dir: Path
     templates_dir: Path
     layouts_dir: Path
+    backups_dir: Path
     seed_manifest: Path
     anthropic_api_key: str | None
     model: str
@@ -44,6 +45,7 @@ def _load() -> Settings:
         exports_dir=data_dir / "exports",
         templates_dir=data_dir / "templates",
         layouts_dir=data_dir / "layouts",
+        backups_dir=data_dir / "backups",
         seed_manifest=data_dir / ".seeded.json",
         anthropic_api_key=os.getenv("ANTHROPIC_API_KEY") or None,
         model=os.getenv("JOURNAL_MODEL", "claude-opus-5"),
@@ -53,6 +55,7 @@ def _load() -> Settings:
         settings.exports_dir,
         settings.templates_dir,
         settings.layouts_dir,
+        settings.backups_dir,
     ):
         directory.mkdir(parents=True, exist_ok=True)
     return settings
