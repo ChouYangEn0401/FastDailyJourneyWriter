@@ -8,7 +8,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
 from app import storage
-from app.models import Entry, EntryCreate, EntryUpdate, FieldKind
+from app.models import Entry, EntryCreate, EntryRevision, EntryUpdate, FieldKind
 from app.richtext import sanitize, to_plain
 from app.template_registry import get_template
 from app.services import (
@@ -141,6 +141,21 @@ def read_orphans(entry_id: int, template_id: str | None = None) -> list[OrphanIn
     return out
 
 
+@router.get("/{entry_id}/revisions", response_model=list[EntryRevision])
+def list_revisions(entry_id: int) -> list[EntryRevision]:
+    """Past versions of this entry, newest first."""
+    require_entry(entry_id)
+    return [EntryRevision(**row) for row in storage.list_revisions(entry_id)]
+
+
+@router.post("/revisions/{revision_id}/restore", response_model=Entry)
+def restore_revision(revision_id: int) -> Entry:
+    entry = storage.restore_revision(revision_id)
+    if entry is None:
+        raise HTTPException(404, f"找不到這個版本 #{revision_id}")
+    return entry
+
+
 @router.patch("/{entry_id}", response_model=Entry)
 def update_entry(entry_id: int, payload: EntryUpdate) -> Entry:
     existing, _ = require_entry(entry_id)
@@ -157,7 +172,16 @@ def update_entry(entry_id: int, payload: EntryUpdate) -> Entry:
     if payload.closing is not None:
         updates["closing"] = sanitize(payload.closing)
 
-    updated = storage.update_entry(entry_id, payload.model_copy(update=updates))
+    try:
+        updated = storage.update_entry(entry_id, payload.model_copy(update=updates))
+    except storage.StaleWriteError as exc:
+        # 409 rather than an overwrite: the client decides whether to keep its
+        # own version or take the newer one.
+        raise HTTPException(
+            409,
+            "這篇日記在別的地方被改過了（可能是另一個分頁）。"
+            "請重新載入，避免蓋掉比較新的內容。",
+        ) from exc
     if updated is None:
         raise HTTPException(404, f"找不到日記 #{entry_id}")
     return updated

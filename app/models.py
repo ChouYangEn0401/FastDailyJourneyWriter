@@ -133,6 +133,42 @@ class EntryUpdate(BaseModel):
     answers: dict[str, Any] | None = None
     closing: str | None = None
     field_colors: dict[str, str] | None = None
+    #: What the client believes it last read. When supplied and no longer
+    #: current, the write is refused instead of clobbering someone else's
+    #: newer text.
+    expected_updated_at: datetime | None = None
+
+
+class EntryRevision(BaseModel):
+    """A past version of an entry, kept so a bad save can be undone."""
+
+    id: int
+    entry_id: int
+    entry_date: date
+    title: str
+    template_id: str
+    char_count: int
+    reason: str
+    created_at: datetime
+
+
+class TrashItem(BaseModel):
+    """A deleted entry that can still be put back."""
+
+    revision_id: int
+    entry_id: int
+    entry_date: date
+    title: str
+    char_count: int
+    deleted_at: datetime
+
+
+class BackupInfo(BaseModel):
+    name: str
+    size_bytes: int
+    created_at: datetime
+    #: Snapshots taken automatically are pruned; ones you asked for are kept.
+    automatic: bool = True
 
 
 class Entry(EntryBase):
