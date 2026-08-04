@@ -94,7 +94,7 @@ def main() -> None:
     os.chdir(PROJECT_ROOT)
 
     host = os.getenv("JOURNAL_HOST", "127.0.0.1")
-    port = int(os.getenv("JOURNAL_PORT", "8000"))
+    port = int(os.getenv("JOURNAL_PORT", "8888"))
     reload = os.getenv("JOURNAL_RELOAD", "1") != "0"
     print(f"\n  每日靈修日記  ->  http://{host}:{port}\n")
     uvicorn.run("app.main:app", host=host, port=port, reload=reload)

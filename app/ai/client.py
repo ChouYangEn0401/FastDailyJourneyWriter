@@ -124,7 +124,7 @@ def complete_json(
     system: str,
     user: str,
     schema: dict[str, Any],
-    max_tokens: int = 8000,
+    max_tokens: int = 8888,
     effort: str = "medium",
 ) -> dict[str, Any]:
     raw = complete(

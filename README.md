@@ -28,7 +28,7 @@ pip install -r requirements.txt
 python run.py                   # 或 python app/main.py
 ```
 
-打開 <http://127.0.0.1:8000>。（也可以 `uvicorn app.main:app --reload`。）
+打開 <http://127.0.0.1:8888>。（也可以 `uvicorn app.main:app --reload`。）
 環境變數：`JOURNAL_PORT`、`JOURNAL_HOST`、`JOURNAL_RELOAD=0`、`JOURNAL_DATA_DIR`。
 
 ---
