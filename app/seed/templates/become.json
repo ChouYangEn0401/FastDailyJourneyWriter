@@ -1,0 +1,114 @@
+{
+  "id": "become",
+  "name": "我想成為什麼樣的人",
+  "description": "先寫下想長成的樣子，再看今天哪一刻像、哪一刻不像。每天一點點。",
+  "group": "成為什麼樣的人",
+  "order": 20,
+  "default_theme": "linen",
+  "closing_label": "寫給未來的自己",
+  "closing_hint": "寫給一年後讀到這一頁的你。",
+  "closing_placeholder": "等你讀到這一段的時候，希望你已經…",
+  "sections": [
+    {
+      "id": "picture",
+      "title": "那個人的樣子",
+      "color": "#b5623c",
+      "icon": "✦",
+      "fields": [
+        {
+          "id": "admire",
+          "label": "我心裡有沒有一個這樣的人？",
+          "kind": "short_text",
+          "placeholder": "他叫什麼名字",
+          "hint": "身邊的人、書裡的人、聖經裡的人都可以"
+        },
+        {
+          "id": "quality",
+          "label": "我最想長成的樣子（挑兩三個就好）",
+          "kind": "multi_choice",
+          "options": [
+            { "id": "honest", "label": "誠實" },
+            { "id": "gentle", "label": "溫柔" },
+            { "id": "brave", "label": "勇敢" },
+            { "id": "patient", "label": "有耐心" },
+            { "id": "faithful", "label": "守信" },
+            { "id": "generous", "label": "慷慨" },
+            { "id": "humble", "label": "謙卑" },
+            { "id": "focused", "label": "專注" },
+            { "id": "discipline", "label": "自律" },
+            { "id": "humour", "label": "幽默" },
+            { "id": "reliable", "label": "可靠" },
+            { "id": "listener", "label": "會聽人說話" },
+            { "id": "unhurried", "label": "不慌不忙" },
+            { "id": "admit", "label": "敢認錯" },
+            { "id": "curious", "label": "對人好奇" },
+            { "id": "hopeful", "label": "有盼望" }
+          ]
+        },
+        {
+          "id": "sentence",
+          "label": "一句話說清楚",
+          "kind": "fill",
+          "pattern": "我想成為一個 {} 的人，因為 {} 。",
+          "hint": "這一句可以每天照抄，不用每天想新的"
+        }
+      ]
+    },
+    {
+      "id": "today",
+      "title": "今天呢",
+      "color": "#2456b8",
+      "icon": "☀",
+      "fields": [
+        {
+          "id": "like",
+          "label": "今天哪一刻，我像那個人？",
+          "color": "#1f7a4d",
+          "hint": "再小都算，一句話、一個忍住"
+        },
+        {
+          "id": "unlike",
+          "label": "今天哪一刻，我離他最遠？",
+          "color": "#2456b8",
+          "hint": "看清楚就好，不用罵自己"
+        },
+        {
+          "id": "cost",
+          "label": "當時如果要做對的選擇，我要付出什麼？",
+          "kind": "short_text",
+          "hint": "多半是面子、時間，或一句不好說的話"
+        }
+      ]
+    },
+    {
+      "id": "step",
+      "title": "往前一步",
+      "color": "#1f7a4d",
+      "icon": "→",
+      "fields": [
+        {
+          "id": "practice",
+          "label": "明天可以練習的一件具體小事",
+          "kind": "short_text",
+          "color": "#1f7a4d",
+          "hint": "具體到明天一看就知道要做什麼"
+        },
+        {
+          "id": "who",
+          "label": "誰會因為我變成這樣，日子好過一點？",
+          "kind": "short_text"
+        },
+        {
+          "id": "howlong",
+          "label": "這件事我打算練多久？",
+          "kind": "choice",
+          "options": [
+            { "id": "tomorrow", "label": "明天" },
+            { "id": "week", "label": "這一週" },
+            { "id": "month", "label": "這個月" }
+          ]
+        }
+      ]
+    }
+  ]
+}

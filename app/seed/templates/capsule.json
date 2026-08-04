@@ -1,0 +1,236 @@
+{
+  "id": "capsule",
+  "name": "反思膠囊 · 今天的三件事",
+  "description": "一件事想到底：發生什麼、學到什麼、經文怎麼說、有智慧的人怎麼說。一天做一塊就夠，行有餘力做三塊。",
+  "group": "成為什麼樣的人",
+  "order": 22,
+  "default_theme": "linen",
+  "sections": [
+    {
+      "id": "one",
+      "title": "第一件事",
+      "color": "#2456b8",
+      "icon": "①",
+      "fields": [
+        {
+          "id": "a_what",
+          "label": "發生了什麼事",
+          "placeholder": "今天…",
+          "hint": "挑今天最需要想清楚的那一件"
+        },
+        {
+          "id": "a_feel",
+          "label": "這件事給我的感受",
+          "kind": "multi_choice",
+          "options": [
+            { "id": "glad", "label": "開心" },
+            { "id": "moved", "label": "被觸動" },
+            { "id": "relief", "label": "鬆一口氣" },
+            { "id": "proud", "label": "有成就感" },
+            { "id": "sad", "label": "難過" },
+            { "id": "angry", "label": "生氣" },
+            { "id": "anxious", "label": "焦慮" },
+            { "id": "shame", "label": "羞愧" },
+            { "id": "wronged", "label": "委屈" },
+            { "id": "tired", "label": "疲累" },
+            { "id": "confused", "label": "困惑" },
+            { "id": "numb", "label": "說不上來" }
+          ]
+        },
+        {
+          "id": "a_learn",
+          "label": "我從這件事看見或學到什麼",
+          "hint": "關於這件事，也關於我自己"
+        },
+        {
+          "id": "a_verse",
+          "label": "有哪一段經文用得上？",
+          "kind": "short_text",
+          "placeholder": "出處，或直接寫那句話",
+          "color": "#1f7a4d",
+          "hint": "想不起出處沒關係，寫大意就好"
+        },
+        {
+          "id": "a_verse_gain",
+          "label": "那段話讓我看見什麼",
+          "color": "#1f7a4d"
+        },
+        {
+          "id": "a_wisdom",
+          "label": "有沒有誰說過的一句話，這時候用得上？",
+          "kind": "short_text",
+          "color": "#2f7d86",
+          "hint": "創業家、作者、老師、長輩、朋友都算"
+        },
+        {
+          "id": "a_wisdom_gain",
+          "label": "那句話提醒我什麼",
+          "color": "#2f7d86"
+        },
+        {
+          "id": "a_verdict",
+          "label": "現在回頭看，這件事對我是",
+          "kind": "choice",
+          "options": [
+            { "id": "good", "label": "好事" },
+            { "id": "hard_good", "label": "難，但對我有用" },
+            { "id": "unclear", "label": "還看不出來" },
+            { "id": "still_hurts", "label": "我還在痛" }
+          ],
+          "hint": "「還在痛」也是誠實的答案"
+        }
+      ]
+    },
+    {
+      "id": "two",
+      "title": "第二件事",
+      "color": "#1f7a4d",
+      "icon": "②",
+      "fields": [
+        {
+          "id": "b_what",
+          "label": "發生了什麼事",
+          "hint": "今天只有一件也很好，這一段空著就好"
+        },
+        {
+          "id": "b_feel",
+          "label": "這件事給我的感受",
+          "kind": "multi_choice",
+          "options": [
+            { "id": "glad", "label": "開心" },
+            { "id": "moved", "label": "被觸動" },
+            { "id": "relief", "label": "鬆一口氣" },
+            { "id": "proud", "label": "有成就感" },
+            { "id": "sad", "label": "難過" },
+            { "id": "angry", "label": "生氣" },
+            { "id": "anxious", "label": "焦慮" },
+            { "id": "shame", "label": "羞愧" },
+            { "id": "wronged", "label": "委屈" },
+            { "id": "tired", "label": "疲累" },
+            { "id": "confused", "label": "困惑" },
+            { "id": "numb", "label": "說不上來" }
+          ]
+        },
+        { "id": "b_learn", "label": "我從這件事看見或學到什麼" },
+        {
+          "id": "b_verse",
+          "label": "有哪一段經文用得上？",
+          "kind": "short_text",
+          "placeholder": "出處，或直接寫那句話",
+          "color": "#1f7a4d"
+        },
+        {
+          "id": "b_verse_gain",
+          "label": "那段話讓我看見什麼",
+          "color": "#1f7a4d"
+        },
+        {
+          "id": "b_wisdom",
+          "label": "有沒有誰說過的一句話，這時候用得上？",
+          "kind": "short_text",
+          "color": "#2f7d86"
+        },
+        {
+          "id": "b_wisdom_gain",
+          "label": "那句話提醒我什麼",
+          "color": "#2f7d86"
+        },
+        {
+          "id": "b_verdict",
+          "label": "現在回頭看，這件事對我是",
+          "kind": "choice",
+          "options": [
+            { "id": "good", "label": "好事" },
+            { "id": "hard_good", "label": "難，但對我有用" },
+            { "id": "unclear", "label": "還看不出來" },
+            { "id": "still_hurts", "label": "我還在痛" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "three",
+      "title": "第三件事",
+      "color": "#b5623c",
+      "icon": "③",
+      "fields": [
+        { "id": "c_what", "label": "發生了什麼事" },
+        {
+          "id": "c_feel",
+          "label": "這件事給我的感受",
+          "kind": "multi_choice",
+          "options": [
+            { "id": "glad", "label": "開心" },
+            { "id": "moved", "label": "被觸動" },
+            { "id": "relief", "label": "鬆一口氣" },
+            { "id": "proud", "label": "有成就感" },
+            { "id": "sad", "label": "難過" },
+            { "id": "angry", "label": "生氣" },
+            { "id": "anxious", "label": "焦慮" },
+            { "id": "shame", "label": "羞愧" },
+            { "id": "wronged", "label": "委屈" },
+            { "id": "tired", "label": "疲累" },
+            { "id": "confused", "label": "困惑" },
+            { "id": "numb", "label": "說不上來" }
+          ]
+        },
+        { "id": "c_learn", "label": "我從這件事看見或學到什麼" },
+        {
+          "id": "c_verse",
+          "label": "有哪一段經文用得上？",
+          "kind": "short_text",
+          "placeholder": "出處，或直接寫那句話",
+          "color": "#1f7a4d"
+        },
+        {
+          "id": "c_verse_gain",
+          "label": "那段話讓我看見什麼",
+          "color": "#1f7a4d"
+        },
+        {
+          "id": "c_wisdom",
+          "label": "有沒有誰說過的一句話，這時候用得上？",
+          "kind": "short_text",
+          "color": "#2f7d86"
+        },
+        {
+          "id": "c_wisdom_gain",
+          "label": "那句話提醒我什麼",
+          "color": "#2f7d86"
+        },
+        {
+          "id": "c_verdict",
+          "label": "現在回頭看，這件事對我是",
+          "kind": "choice",
+          "options": [
+            { "id": "good", "label": "好事" },
+            { "id": "hard_good", "label": "難，但對我有用" },
+            { "id": "unclear", "label": "還看不出來" },
+            { "id": "still_hurts", "label": "我還在痛" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sum",
+      "title": "收起來",
+      "color": "#22252a",
+      "icon": "✦",
+      "fields": [
+        {
+          "id": "biggest",
+          "label": "今天收穫最大的一個學習",
+          "kind": "short_text",
+          "color": "#b5623c",
+          "hint": "只能挑一個"
+        },
+        {
+          "id": "carry",
+          "label": "明天要帶走的一句話",
+          "kind": "short_text",
+          "hint": "經文、別人的話、自己想出來的都可以"
+        }
+      ]
+    }
+  ]
+}

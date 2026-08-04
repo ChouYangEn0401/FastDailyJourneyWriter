@@ -142,14 +142,14 @@ footer{margin-top:2.5rem;padding-top:1rem;border-top:1px solid var(--hairline);
 
         {% if doc.has_closing %}
         <div class="closing">
-          <span class="f-label">給主的話</span>
+          <span class="f-label">{{ doc.closing_label }}</span>
           {% for line in doc.closing_lines %}<p>{{ line | runs }}</p>{% endfor %}
         </div>
         {% endif %}
       </div>
     </div>
 
-    <footer><span>每日靈修日記</span><span>{{ doc.date_display }}</span></footer>
+    <footer><span>{{ doc.template_name }}</span><span>{{ doc.date_display }}</span></footer>
   </div></article>
 </div>
 {% include "_cover.js.j2" %}

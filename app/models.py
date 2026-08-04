@@ -67,6 +67,16 @@ class JournalTemplate(BaseModel):
     description: str = ""
     default_theme: str = "letterpress"
     default_layout: str = "letter"
+    #: Heading this question set sits under in the picker. Sets sharing a
+    #: group are listed together; an empty group lands in a trailing "其他".
+    group: str = ""
+    #: Position in the list. Lower comes first; ties break on file name.
+    order: int = 1000
+    #: What the free-text block at the end of the entry is called. The
+    #: devotional sets keep "給主的話"; the rest name it something that fits.
+    closing_label: str = "給主的話"
+    closing_hint: str = "今天想對主說的一段話。也可以換色。"
+    closing_placeholder: str = "親愛的主耶穌，今天…"
     sections: list[TemplateSection] = Field(default_factory=list)
 
     def field_map(self) -> dict[str, TemplateField]:

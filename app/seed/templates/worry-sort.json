@@ -1,0 +1,107 @@
+{
+  "id": "worry-sort",
+  "name": "擔心的事，分一分",
+  "description": "腦子停不下來的時候用。把擔心倒出來，分成「能做的」和「做什麼都沒用的」。",
+  "group": "心情與難處",
+  "order": 12,
+  "default_layout": "ledger",
+  "closing_label": "寫給自己的話",
+  "closing_hint": "睡前讀一次，就可以放下了。",
+  "closing_placeholder": "今天能做的我做了，剩下的…",
+  "sections": [
+    {
+      "id": "dump",
+      "title": "先全部倒出來",
+      "color": "#5a6472",
+      "icon": "▤",
+      "fields": [
+        {
+          "id": "worries",
+          "label": "現在腦子裡在轉的事",
+          "kind": "list",
+          "placeholder": "我擔心…",
+          "min_rows": 5,
+          "hint": "不用排序，想到就寫"
+        }
+      ]
+    },
+    {
+      "id": "split",
+      "title": "哪些是我能決定的",
+      "color": "#2456b8",
+      "icon": "⌥",
+      "fields": [
+        {
+          "id": "can",
+          "label": "我能做點什麼的",
+          "kind": "list",
+          "min_rows": 3,
+          "color": "#2456b8"
+        },
+        {
+          "id": "cannot",
+          "label": "我做什麼都不會改變的",
+          "kind": "list",
+          "min_rows": 3,
+          "color": "#5a6472",
+          "hint": "這一欄寫完就先擱著，它不歸我管"
+        }
+      ]
+    },
+    {
+      "id": "test",
+      "title": "拿出來看一看",
+      "color": "#22252a",
+      "icon": "⌕",
+      "fields": [
+        {
+          "id": "worst",
+          "label": "最擔心的那一件，最壞會怎樣？",
+          "hint": "說出來通常沒有想像中大"
+        },
+        {
+          "id": "survive",
+          "label": "真的發生了，我會怎麼撐過去？",
+          "color": "#1f7a4d"
+        },
+        {
+          "id": "odds",
+          "label": "老實說，發生的機率",
+          "kind": "scale",
+          "options": [
+            { "id": "likely", "label": "很可能" },
+            { "id": "maybe", "label": "說不準" },
+            { "id": "unlikely", "label": "其實不太可能" }
+          ]
+        },
+        { "id": "evidence", "label": "有什麼證據支持它會發生？有什麼證據反過來？" }
+      ]
+    },
+    {
+      "id": "do",
+      "title": "今天要做的",
+      "color": "#1f7a4d",
+      "icon": "→",
+      "fields": [
+        {
+          "id": "action",
+          "label": "能讓我安心一點的一個動作",
+          "kind": "short_text",
+          "color": "#1f7a4d"
+        },
+        {
+          "id": "when",
+          "label": "什麼時候做",
+          "kind": "short_text"
+        },
+        {
+          "id": "park",
+          "label": "其他的先寄放",
+          "kind": "fill",
+          "pattern": "其他的事，我先放到 {} 再想。",
+          "hint": "給擔心一個回來的時間，它比較願意先走"
+        }
+      ]
+    }
+  ]
+}

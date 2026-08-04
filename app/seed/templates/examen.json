@@ -1,0 +1,124 @@
+{
+  "id": "examen",
+  "name": "省察 · 一天的回看",
+  "description": "把一天在主面前重看一遍：謝恩、求光照、看見、認罪、交給明天。",
+  "group": "與神同行",
+  "order": 5,
+  "default_theme": "dawn",
+  "sections": [
+    {
+      "id": "still",
+      "title": "先安靜",
+      "color": "#b5623c",
+      "icon": "✧",
+      "fields": [
+        {
+          "id": "heart",
+          "label": "此刻我的心",
+          "kind": "scale",
+          "options": [
+            { "id": "quiet", "label": "安靜" },
+            { "id": "restless", "label": "有點浮動" },
+            { "id": "noisy", "label": "很亂" }
+          ],
+          "hint": "不用先整理好才來"
+        },
+        {
+          "id": "given",
+          "label": "先謝恩：今天有什麼是白白得來的？",
+          "kind": "list",
+          "placeholder": "謝謝主…",
+          "min_rows": 3,
+          "color": "#1f7a4d"
+        }
+      ]
+    },
+    {
+      "id": "light",
+      "title": "求光照",
+      "color": "#2456b8",
+      "icon": "☀",
+      "fields": [
+        {
+          "id": "ask_light",
+          "label": "求主的眼光",
+          "kind": "fill",
+          "pattern": "主啊，求祢讓我用祢的眼睛，重看今天 {} 的那一段。"
+        }
+      ]
+    },
+    {
+      "id": "replay",
+      "title": "回看這一天",
+      "color": "#22252a",
+      "icon": "⟲",
+      "fields": [
+        {
+          "id": "alive",
+          "label": "哪一刻我最有生命力、最感到被愛？",
+          "placeholder": "今天…",
+          "hint": "很小的一刻也算"
+        },
+        {
+          "id": "dry",
+          "label": "哪一刻我最枯乾、最想逃？",
+          "placeholder": "今天…"
+        },
+        {
+          "id": "where_god",
+          "label": "回頭看，主當時在哪裡？",
+          "color": "#2456b8",
+          "hint": "當下常常看不見，回頭看才看得見"
+        }
+      ]
+    },
+    {
+      "id": "confess",
+      "title": "認罪與領受赦免",
+      "color": "#c8322c",
+      "icon": "✝",
+      "fields": [
+        {
+          "id": "sorry",
+          "label": "今天想向主說對不起的事",
+          "placeholder": "主啊，我…"
+        },
+        {
+          "id": "hurt_someone",
+          "label": "有沒有誰因為我今天的話或行為受了傷？",
+          "kind": "short_text"
+        },
+        {
+          "id": "received",
+          "label": "我領受主的赦免了嗎？",
+          "kind": "scale",
+          "options": [
+            { "id": "yes", "label": "領受了" },
+            { "id": "half", "label": "半信半疑" },
+            { "id": "no", "label": "還放不下" }
+          ],
+          "hint": "赦免是主給的，不是我掙來的"
+        }
+      ]
+    },
+    {
+      "id": "tomorrow",
+      "title": "交給明天",
+      "color": "#1f7a4d",
+      "icon": "→",
+      "fields": [
+        {
+          "id": "one_thing",
+          "label": "明天最想和主一起做好的一件事",
+          "kind": "short_text"
+        },
+        {
+          "id": "ask_for",
+          "label": "明天的祈求",
+          "kind": "fill",
+          "pattern": "主啊，明天求祢給我 {} ，讓我能 {} 。"
+        }
+      ]
+    }
+  ]
+}

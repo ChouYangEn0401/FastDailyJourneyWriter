@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>每日靈修日記</title>
+<title>每日日記</title>
 <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
@@ -12,7 +12,7 @@
   <div class="brand">
     <span class="mark">✎</span>
     <div>
-      <strong>每日靈修日記</strong>
+      <strong>每日日記</strong>
       <small id="ai-status">…</small>
     </div>
   </div>
@@ -91,8 +91,8 @@
     <div id="form"></div>
 
     <div class="closing-block">
-      <h3>給主的話</h3>
-      <p class="muted">今天想對主說的一段話。也可以換色。</p>
+      <h3 id="closing-label">給主的話</h3>
+      <p class="muted" id="closing-hint">今天想對主說的一段話。也可以換色。</p>
       <div class="rich tall" id="closing" contenteditable="true"
            data-placeholder="親愛的主耶穌，今天…"></div>
     </div>
@@ -231,6 +231,16 @@
     <div>
       <label class="dlg-label" for="tpl-desc">一句話說明</label>
       <input type="text" id="tpl-desc" placeholder="什麼時候會用這個">
+    </div>
+    <div>
+      <label class="dlg-label" for="tpl-group">分類</label>
+      <input type="text" id="tpl-group" list="tpl-group-options"
+             placeholder="側欄裡歸在哪一群，可留白">
+      <datalist id="tpl-group-options"></datalist>
+    </div>
+    <div>
+      <label class="dlg-label" for="tpl-closing">結尾那一欄叫什麼</label>
+      <input type="text" id="tpl-closing" placeholder="給主的話">
     </div>
   </div>
 

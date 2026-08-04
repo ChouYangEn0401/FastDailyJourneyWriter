@@ -6,8 +6,8 @@ Nothing here is hard-coded. The shipped defaults are JSON files under
 user can edit, duplicate or delete. Anything else dropped into that directory
 shows up alongside them.
 
-A template file is a :class:`~app.models.JournalTemplate` — an optional
-``order`` key controls where it appears in the list.
+A template file is a :class:`~app.models.JournalTemplate` — ``order`` places it
+in the list and ``group`` decides which heading it sits under.
 """
 
 from __future__ import annotations
@@ -26,9 +26,9 @@ def _load_dir() -> list[JournalTemplate]:
     for path in sorted(settings.templates_dir.glob("*.json")):
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
-            order = int(raw.pop("order", 1000))
             raw.setdefault("id", path.stem)
-            templates.append((order, path.stem, JournalTemplate.model_validate(raw)))
+            tpl = JournalTemplate.model_validate(raw)
+            templates.append((tpl.order, path.stem, tpl))
         except Exception as exc:  # noqa: BLE001 - one bad file must not kill boot
             log.warning("Skipping invalid template %s: %s", path.name, exc)
     templates.sort(key=lambda item: (item[0], item[1]))

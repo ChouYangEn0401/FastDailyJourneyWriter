@@ -1,0 +1,147 @@
+{
+  "id": "hard-day",
+  "name": "難熬的一天",
+  "description": "今天很不好過的時候用。分開「事實」和「我的解讀」，最後只找一件做得到的小事。",
+  "group": "心情與難處",
+  "order": 10,
+  "default_theme": "linen",
+  "closing_label": "寫給自己的話",
+  "closing_hint": "像對朋友說話那樣，對今天的自己說幾句。",
+  "closing_placeholder": "今天的你，其實已經…",
+  "sections": [
+    {
+      "id": "what",
+      "title": "發生了什麼",
+      "color": "#5a6472",
+      "icon": "▤",
+      "fields": [
+        {
+          "id": "fact",
+          "label": "只寫事實",
+          "placeholder": "今天…",
+          "hint": "先不加解釋，像監視器拍到的那樣"
+        },
+        {
+          "id": "story",
+          "label": "我心裡對這件事的解讀是什麼？",
+          "color": "#6b4c9a",
+          "hint": "事實之外，我自己加上去的那一層"
+        }
+      ]
+    },
+    {
+      "id": "feel",
+      "title": "我的感覺",
+      "color": "#6b4c9a",
+      "icon": "◍",
+      "fields": [
+        {
+          "id": "mood",
+          "label": "現在的感覺（可複選）",
+          "kind": "multi_choice",
+          "options": [
+            { "id": "sad", "label": "難過" },
+            { "id": "angry", "label": "生氣" },
+            { "id": "anxious", "label": "焦慮" },
+            { "id": "afraid", "label": "害怕" },
+            { "id": "shame", "label": "羞愧" },
+            { "id": "wronged", "label": "委屈" },
+            { "id": "alone", "label": "孤單" },
+            { "id": "tired", "label": "疲累" },
+            { "id": "numb", "label": "麻木" },
+            { "id": "relief", "label": "鬆一口氣" }
+          ]
+        },
+        {
+          "id": "body",
+          "label": "身體哪裡有感覺？",
+          "kind": "multi_choice",
+          "options": [
+            { "id": "chest", "label": "胸口悶" },
+            { "id": "neck", "label": "肩頸緊" },
+            { "id": "stomach", "label": "胃不舒服" },
+            { "id": "head", "label": "頭痛" },
+            { "id": "breath", "label": "喘不過氣" },
+            { "id": "weak", "label": "沒力氣" },
+            { "id": "sleep", "label": "睡不著" },
+            { "id": "none", "label": "沒有特別" }
+          ]
+        },
+        {
+          "id": "intensity",
+          "label": "現在的強度",
+          "kind": "scale",
+          "options": [
+            { "id": "high", "label": "快撐不住" },
+            { "id": "mid", "label": "很重" },
+            { "id": "low", "label": "還撐得住" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sort",
+      "title": "分一分",
+      "color": "#2456b8",
+      "icon": "⌥",
+      "fields": [
+        {
+          "id": "mine",
+          "label": "這件事裡，哪一部分真的是我的責任？",
+          "color": "#2456b8"
+        },
+        {
+          "id": "not_mine",
+          "label": "哪一部分不是我能決定的？",
+          "color": "#5a6472",
+          "hint": "寫出來，就可以先擱著"
+        },
+        {
+          "id": "need",
+          "label": "我現在需要的是",
+          "kind": "multi_choice",
+          "options": [
+            { "id": "sleep", "label": "睡一覺" },
+            { "id": "listen", "label": "有人聽我說" },
+            { "id": "alone", "label": "一個人靜一下" },
+            { "id": "eat", "label": "好好吃頓飯" },
+            { "id": "sorry", "label": "道歉或被道歉" },
+            { "id": "finish", "label": "把事情做完" },
+            { "id": "nothing", "label": "什麼都不做" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "next",
+      "title": "接下來",
+      "color": "#1f7a4d",
+      "icon": "→",
+      "fields": [
+        {
+          "id": "friend",
+          "label": "換個位置想",
+          "kind": "fill",
+          "pattern": "如果最好的朋友遇到這件事，我會對他說：「{}」",
+          "hint": "我們對朋友通常比對自己好"
+        },
+        {
+          "id": "step",
+          "label": "今天結束前，我還做得到的一件小事",
+          "kind": "short_text",
+          "color": "#1f7a4d"
+        },
+        {
+          "id": "tell",
+          "label": "要不要讓誰知道？",
+          "kind": "choice",
+          "options": [
+            { "id": "yes", "label": "要" },
+            { "id": "later", "label": "再想想" },
+            { "id": "no", "label": "先不用" }
+          ]
+        }
+      ]
+    }
+  ]
+}

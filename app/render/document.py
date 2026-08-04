@@ -38,7 +38,15 @@ class RenderedField:
 
     @property
     def is_empty(self) -> bool:
-        return not self.chips and not any(
+        """Was this question left unanswered?
+
+        A tick question always carries its full row of chips — that is how the
+        unpicked options get drawn next to the picked one — so "has chips" says
+        nothing about whether it was answered. Only a selection does.
+        """
+        if self.chips:
+            return not any(c.selected for c in self.chips)
+        return not any(
             any(r.text.strip() for r in line) for line in self.lines
         )
 
@@ -70,6 +78,9 @@ class RenderedDoc:
     closing_lines: list[list[Run]]
     word_count: int
     palette: list[str]
+    #: What the closing block is called in this question set — "給主的話" for
+    #: the devotional sets, something else for the ones that are not.
+    closing_label: str = "給主的話"
 
     @property
     def has_closing(self) -> bool:
@@ -97,7 +108,7 @@ class RenderedDoc:
                         if text:
                             parts.append(f"    {text}")
         if self.has_closing:
-            parts.append("\n## 給主的話")
+            parts.append(f"\n## {self.closing_label}")
             for line in self.closing_lines:
                 text = "".join(r.text for r in line).strip()
                 if text:
@@ -239,4 +250,5 @@ def build_document(
         closing_lines=closing_lines,
         word_count=len([c for c in body if not c.isspace()]),
         palette=palette,
+        closing_label=template.closing_label or "給主的話",
     )

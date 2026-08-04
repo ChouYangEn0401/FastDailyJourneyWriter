@@ -269,6 +269,7 @@ function buildField(field, section) {
 function buildForm() {
   const form = $("#form");
   form.replaceChildren();
+  renderClosingLabels();
   if (!state.template) return;
 
   for (const section of state.template.sections) {
@@ -609,31 +610,69 @@ function newEntry() {
 
 // ------------------------------------------------------------ pickers
 
+/** Question sets in list order, bucketed under their group heading. */
+function groupedTemplates() {
+  const groups = new Map();
+  for (const tpl of state.templates) {
+    const name = (tpl.group || "").trim() || "其他";
+    if (!groups.has(name)) groups.set(name, []);
+    groups.get(name).push(tpl);
+  }
+  // "其他" collects the ungrouped, so it belongs at the bottom.
+  const other = groups.get("其他");
+  if (other && groups.size > 1) {
+    groups.delete("其他");
+    groups.set("其他", other);
+  }
+  return groups;
+}
+
 function renderTemplatePicker() {
   const list = $("#template-list");
   list.replaceChildren();
-  for (const tpl of state.templates) {
-    const row = document.createElement("div");
-    row.className = "tpl-row";
+  const groups = groupedTemplates();
+  const showHeadings = groups.size > 1;
 
-    const btn = document.createElement("button");
-    btn.className = "tpl";
-    btn.setAttribute("aria-pressed", String(tpl.id === state.template?.id));
-    btn.innerHTML = `<b>${tpl.name}</b><span>${tpl.description || ""}</span>`;
-    btn.addEventListener("click", () => switchTemplate(tpl));
+  for (const [name, templates] of groups) {
+    if (showHeadings) {
+      const head = document.createElement("div");
+      head.className = "tpl-group";
+      head.textContent = name;
+      list.append(head);
+    }
+    for (const tpl of templates) {
+      const row = document.createElement("div");
+      row.className = "tpl-row";
 
-    const edit = document.createElement("button");
-    edit.className = "tpl-edit";
-    edit.title = "編輯這個題組";
-    edit.textContent = "✎";
-    edit.addEventListener("click", (ev) => {
-      ev.stopPropagation();
-      openTemplateEditor(tpl);
-    });
+      const btn = document.createElement("button");
+      btn.className = "tpl";
+      btn.setAttribute("aria-pressed", String(tpl.id === state.template?.id));
+      btn.innerHTML = `<b>${tpl.name}</b><span>${tpl.description || ""}</span>`;
+      btn.addEventListener("click", () => switchTemplate(tpl));
 
-    row.append(btn, edit);
-    list.append(row);
+      const edit = document.createElement("button");
+      edit.className = "tpl-edit";
+      edit.title = "編輯這個題組";
+      edit.textContent = "✎";
+      edit.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        openTemplateEditor(tpl);
+      });
+
+      row.append(btn, edit);
+      list.append(row);
+    }
   }
+}
+
+/** The closing block is named by the question set — not every set is a prayer. */
+function renderClosingLabels() {
+  const tpl = state.template;
+  $("#closing-label").textContent = tpl?.closing_label || "給主的話";
+  $("#closing-hint").textContent =
+    tpl?.closing_hint || "今天想對主說的一段話。也可以換色。";
+  $("#closing").dataset.placeholder =
+    tpl?.closing_placeholder || "親愛的主耶穌，今天…";
 }
 
 async function switchTemplate(tpl) {
@@ -857,6 +896,7 @@ function openTemplateEditor(tpl) {
         id: "",
         name: "",
         description: "",
+        group: "",
         default_theme: "letterpress",
         default_layout: "letter",
         sections: [blankSection()],
@@ -865,6 +905,20 @@ function openTemplateEditor(tpl) {
   $("#tpl-dlg-title").textContent = tpl ? "編輯題組" : "新增題組";
   $("#tpl-name").value = draft.name;
   $("#tpl-desc").value = draft.description || "";
+  $("#tpl-group").value = draft.group || "";
+  $("#tpl-closing").value = draft.closing_label || "";
+
+  // Offer the groups that already exist, so a new set joins one by typing
+  // rather than by remembering how it was spelled.
+  const options = $("#tpl-group-options");
+  options.replaceChildren();
+  for (const name of groupedTemplates().keys()) {
+    if (name === "其他") continue;
+    const opt = document.createElement("option");
+    opt.value = name;
+    options.append(opt);
+  }
+
   $("#tpl-delete").hidden = !tpl;
   renderTemplateSections();
   $("#tpl-dialog").showModal();
@@ -1041,6 +1095,9 @@ async function saveTemplateDraft() {
   const { draft, isNew } = state.editingTemplate;
   draft.name = $("#tpl-name").value.trim();
   draft.description = $("#tpl-desc").value.trim();
+  draft.group = $("#tpl-group").value.trim();
+  const closing = $("#tpl-closing").value.trim();
+  if (closing) draft.closing_label = closing;
 
   if (!draft.name) {
     toast("先給這個題組一個名字。", true);

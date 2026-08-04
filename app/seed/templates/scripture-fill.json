@@ -2,7 +2,8 @@
   "id": "scripture-fill",
   "name": "填空式靈修",
   "description": "句子已經寫好，只要把空格填起來。最不需要想「該從哪寫起」。",
-  "default_theme": "letterpress",
+  "group": "與神同行",
+  "order": 3,
   "sections": [
     {
       "id": "read",
@@ -14,34 +15,19 @@
           "id": "passage_line",
           "label": "經文",
           "kind": "fill",
-          "options": [],
-          "pattern": "今天讀了 {} ，最觸動我的一句是「{}」。",
-          "placeholder": null,
-          "min_rows": 2,
-          "color": null,
-          "hint": null
+          "pattern": "今天讀了 {} ，最觸動我的一句是「{}」。"
         },
         {
           "id": "about_god",
           "label": "關於神",
           "kind": "fill",
-          "options": [],
-          "pattern": "這段經文讓我看見神是 {} 的神。",
-          "placeholder": null,
-          "min_rows": 2,
-          "color": null,
-          "hint": null
+          "pattern": "這段經文讓我看見神是 {} 的神。"
         },
         {
           "id": "about_me",
           "label": "關於我",
           "kind": "fill",
-          "options": [],
-          "pattern": "也讓我看見自己 {} ，所以我想 {}。",
-          "placeholder": null,
-          "min_rows": 2,
-          "color": null,
-          "hint": null
+          "pattern": "也讓我看見自己 {} ，所以我想 {}。"
         }
       ]
     },
@@ -55,52 +41,21 @@
           "id": "today_line",
           "label": "一天的樣子",
           "kind": "fill",
-          "options": [],
-          "pattern": "今天最像我的一刻是 {}，最不像我的一刻是 {}。",
-          "placeholder": null,
-          "min_rows": 2,
-          "color": null,
-          "hint": null
+          "pattern": "今天最像我的一刻是 {}，最不像我的一刻是 {}。"
         },
         {
           "id": "mood",
           "label": "今天的心情",
           "kind": "multi_choice",
           "options": [
-            {
-              "id": "peace",
-              "label": "平安"
-            },
-            {
-              "id": "joy",
-              "label": "喜樂"
-            },
-            {
-              "id": "tired",
-              "label": "疲累"
-            },
-            {
-              "id": "anxious",
-              "label": "焦慮"
-            },
-            {
-              "id": "thankful",
-              "label": "感恩"
-            },
-            {
-              "id": "numb",
-              "label": "麻木"
-            },
-            {
-              "id": "hopeful",
-              "label": "有盼望"
-            }
-          ],
-          "pattern": null,
-          "placeholder": null,
-          "min_rows": 2,
-          "color": null,
-          "hint": null
+            { "id": "peace", "label": "平安" },
+            { "id": "joy", "label": "喜樂" },
+            { "id": "tired", "label": "疲累" },
+            { "id": "anxious", "label": "焦慮" },
+            { "id": "thankful", "label": "感恩" },
+            { "id": "numb", "label": "麻木" },
+            { "id": "hopeful", "label": "有盼望" }
+          ]
         }
       ]
     },
@@ -114,27 +69,15 @@
           "id": "prayer_line",
           "label": "今天的禱告",
           "kind": "fill",
-          "options": [],
-          "pattern": "主啊，求祢 {}，也謝謝祢 {}。",
-          "placeholder": null,
-          "min_rows": 2,
-          "color": null,
-          "hint": null
+          "pattern": "主啊，求祢 {}，也謝謝祢 {}。"
         },
         {
           "id": "prayer",
           "label": "其他代禱",
           "kind": "list",
-          "options": [],
-          "pattern": null,
-          "placeholder": null,
-          "min_rows": 2,
-          "color": "#c8322c",
-          "hint": null
+          "color": "#c8322c"
         }
       ]
     }
-  ],
-  "order": 3,
-  "default_layout": "letter"
+  ]
 }

@@ -325,7 +325,7 @@ def _render_body(b: _Builder, doc: RenderedDoc) -> None:
         b.advance(0.4)
         start = b.rule_y(b.row) - g.lh
         b.plain(
-            "給主的話",
+            doc.closing_label,
             x=g.content_x + 26 * g.s,
             size=21 * g.s,
             family=body_font,

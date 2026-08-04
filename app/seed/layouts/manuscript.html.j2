@@ -103,7 +103,7 @@ footer{margin-top:2.1rem;font-size:.72rem;color:var(--ink-muted);
 
     {% if doc.has_closing %}
     <div class="closing">
-      <span class="f-label">給主的話</span>
+      <span class="f-label">{{ doc.closing_label }}</span>
       {% for line in doc.closing_lines %}<p>{{ line | runs }}</p>{% endfor %}
     </div>
     {% endif %}

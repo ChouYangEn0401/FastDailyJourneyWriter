@@ -134,6 +134,17 @@ button.danger{
 .spacer{flex:1;}
 .mt{margin-top:.6rem;margin-bottom:0;}
 
+/* group heading in the question-set list */
+.tpl-group{
+  font-size:.7rem;letter-spacing:.14em;color:var(--muted);
+  text-transform:none;padding:.15rem .1rem 0;
+  display:flex;align-items:center;gap:.5rem;
+}
+.tpl-group::after{
+  content:"";flex:1;height:1px;background:var(--line);
+}
+.tpl-group:not(:first-child){margin-top:.5rem;}
+
 /* template row = pick button + edit pencil */
 .tpl-row{display:flex;gap:.25rem;align-items:stretch;}
 .tpl-row .tpl{flex:1;min-width:0;}

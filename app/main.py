@@ -52,7 +52,7 @@ async def lifespan(_: FastAPI):
 
 app = FastAPI(
     title="FastDailyJourneyWriter",
-    description="每天的靈修日記：勾一勾、填一填，就能匯出好看的頁面與卡片。",
+    description="每天的日記：勾一勾、填一填，就能匯出好看的頁面與卡片。",
     version="0.1.0",
     lifespan=lifespan,
 )
@@ -96,7 +96,7 @@ def main() -> None:
     host = os.getenv("JOURNAL_HOST", "127.0.0.1")
     port = int(os.getenv("JOURNAL_PORT", "8888"))
     reload = os.getenv("JOURNAL_RELOAD", "1") != "0"
-    print(f"\n  每日靈修日記  ->  http://{host}:{port}\n")
+    print(f"\n  每日日記  ->  http://{host}:{port}\n")
     uvicorn.run("app.main:app", host=host, port=port, reload=reload)
 
 

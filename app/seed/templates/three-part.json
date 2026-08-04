@@ -2,7 +2,10 @@
   "id": "three-part",
   "name": "三段式（反省・靈修・代禱）",
   "description": "一段一個顏色：反省藍、靈修綠、代禱紅。手寫本常見的分法。",
+  "group": "與神同行",
+  "order": 1,
   "default_theme": "notebook",
+  "default_layout": "manuscript",
   "sections": [
     {
       "id": "reflect",
@@ -13,24 +16,14 @@
         {
           "id": "highlight",
           "label": "今天發生了什麼",
-          "kind": "text",
-          "options": [],
-          "pattern": null,
           "placeholder": "今天…",
-          "min_rows": 2,
-          "color": "#2456b8",
-          "hint": null
+          "color": "#2456b8"
         },
         {
           "id": "learned",
           "label": "我學到 / 我看見自己",
-          "kind": "text",
-          "options": [],
-          "pattern": null,
           "placeholder": "我發現我…",
-          "min_rows": 2,
-          "color": "#2456b8",
-          "hint": null
+          "color": "#2456b8"
         }
       ]
     },
@@ -44,34 +37,17 @@
           "id": "passage",
           "label": "經文進度",
           "kind": "short_text",
-          "options": [],
-          "pattern": null,
-          "placeholder": "例：約伯記 33-34 章",
-          "min_rows": 2,
-          "color": null,
-          "hint": null
+          "placeholder": "例：約伯記 33-34 章"
         },
         {
           "id": "observe",
           "label": "觀察：這段在說什麼",
-          "kind": "text",
-          "options": [],
-          "pattern": null,
-          "placeholder": null,
-          "min_rows": 2,
-          "color": "#1f7a4d",
-          "hint": null
+          "color": "#1f7a4d"
         },
         {
           "id": "apply",
           "label": "應用：那我要怎麼做",
-          "kind": "text",
-          "options": [],
-          "pattern": null,
-          "placeholder": null,
-          "min_rows": 2,
-          "color": "#c8322c",
-          "hint": null
+          "color": "#c8322c"
         }
       ]
     },
@@ -85,27 +61,18 @@
           "id": "prayer",
           "label": "代禱事項",
           "kind": "list",
-          "options": [],
-          "pattern": null,
           "placeholder": "求主…",
           "min_rows": 4,
-          "color": "#c8322c",
-          "hint": null
+          "color": "#c8322c"
         },
         {
           "id": "gratitude",
           "label": "感恩事項",
           "kind": "list",
-          "options": [],
-          "pattern": null,
           "placeholder": "感謝神…",
-          "min_rows": 2,
-          "color": "#1f7a4d",
-          "hint": null
+          "color": "#1f7a4d"
         }
       ]
     }
-  ],
-  "order": 1,
-  "default_layout": "manuscript"
+  ]
 }
