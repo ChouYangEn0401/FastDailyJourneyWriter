@@ -453,7 +453,8 @@ def render_document_svg(
         f'<text x="{g.content_x + g.content_w:.1f}" y="{footer_y:.1f}" '
         f'text-anchor="end" font-family="{_fonts(theme.body_font)}" '
         f'font-size="{18 * s:.1f}" fill="{theme.ink_muted}" '
-        f'letter-spacing="{2 * s:.2f}">耶穌同行日記</text>'
+        f'letter-spacing="{2 * s:.2f}">'
+        f"{xml_escape(doc.template_name)}</text>"
     )
 
     return (
