@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter
 
-from app import preferences
-from app.models import Preferences
+from backend import preferences
+from backend.models import Preferences
 
 router = APIRouter(prefix="/api/preferences", tags=["preferences"])
 

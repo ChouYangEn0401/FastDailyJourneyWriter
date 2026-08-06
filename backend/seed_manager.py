@@ -17,11 +17,11 @@ import logging
 import shutil
 from pathlib import Path
 
-from app.config import PROJECT_ROOT, settings
+from backend.config import PROJECT_ROOT, settings
 
 log = logging.getLogger(__name__)
 
-#: The shipped question sets and page designs. They live outside ``app/``
+#: The shipped question sets and page designs. They live outside ``backend/``
 #: because they are plain content, not Python — nothing in them is specific to
 #: this backend, so any future client can ship the same files.
 SEED_DIR = PROJECT_ROOT / "content"

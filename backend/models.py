@@ -125,7 +125,7 @@ class EntryBase(BaseModel):
     @field_validator("theme")
     @classmethod
     def _known_theme(cls, v: str) -> str:
-        from app.render.themes import THEMES
+        from backend.render.themes import THEMES
 
         return v if v in THEMES else "letterpress"
 

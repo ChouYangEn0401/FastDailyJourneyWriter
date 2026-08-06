@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.richtext import Run
+from backend.richtext import Run
 
 #: Punctuation that may not begin a line — it hangs past the right edge instead.
 CLOSING = set("、。，．：；！？）】》〉」』〞”’%,.!?;:)]}…〜～ー–—")

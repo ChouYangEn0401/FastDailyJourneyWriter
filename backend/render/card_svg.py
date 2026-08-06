@@ -13,10 +13,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from xml.sax.saxutils import escape as xml_escape
 
-from app.models import Entry, JournalTemplate
-from app.render.document import RenderedDoc, build_document
-from app.render.textlayout import Piece, text_width, wrap_plain, wrap_runs
-from app.render.themes import Theme, get_theme
+from backend.models import Entry, JournalTemplate
+from backend.render.document import RenderedDoc, build_document
+from backend.render.textlayout import Piece, text_width, wrap_plain, wrap_runs
+from backend.render.themes import Theme, get_theme
 
 PaperStyle = str  # "ruled" | "grid" | "plain" | "dotted"
 

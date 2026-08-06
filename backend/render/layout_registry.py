@@ -17,8 +17,8 @@ from __future__ import annotations
 import json
 import logging
 
-from app.config import settings
-from app.models import Layout
+from backend.config import settings
+from backend.models import Layout
 
 log = logging.getLogger(__name__)
 

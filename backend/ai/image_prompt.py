@@ -12,9 +12,9 @@ from __future__ import annotations
 
 import re
 
-from app.ai.client import complete_json, is_available
-from app.models import ImagePromptResponse
-from app.render.document import RenderedDoc
+from backend.ai.client import complete_json, is_available
+from backend.models import ImagePromptResponse
+from backend.render.document import RenderedDoc
 
 STYLES: dict[str, tuple[str, str]] = {
     "watercolor": ("水彩", "loose watercolour on cold-press paper, soft bleeds, visible paper grain"),

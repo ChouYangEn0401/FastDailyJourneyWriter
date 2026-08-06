@@ -14,9 +14,9 @@ from __future__ import annotations
 import hashlib
 import re
 
-from app.ai.client import complete
-from app.models import Layout
-from app.render.layout_registry import read_layout_html, save_layout
+from backend.ai.client import complete
+from backend.models import Layout
+from backend.render.layout_registry import read_layout_html, save_layout
 
 _FENCE = re.compile(r"^\s*```(?:html|jinja|jinja2|j2)?\s*|\s*```\s*$", re.IGNORECASE)
 _SLUG = re.compile(r"[^a-z0-9-]+")
@@ -142,7 +142,7 @@ def slugify(name: str) -> str:
 
 
 def unique_id(base: str) -> str:
-    from app.render.layout_registry import all_layouts
+    from backend.render.layout_registry import all_layouts
 
     taken = {x.id for x in all_layouts()}
     if base not in taken:

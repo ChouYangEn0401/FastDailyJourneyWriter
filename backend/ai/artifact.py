@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from app.ai.client import complete
-from app.render.document import RenderedDoc
+from backend.ai.client import complete
+from backend.render.document import RenderedDoc
 
 TITLE_SYSTEM = """\
 You name a day. Given a devotional journal entry in Traditional Chinese, reply \

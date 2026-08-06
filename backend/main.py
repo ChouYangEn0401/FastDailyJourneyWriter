@@ -2,8 +2,8 @@
 
 Both of these work:
 
-    python app/main.py            # or hit Run in your editor
-    uvicorn app.main:app --reload
+    python backend/main.py            # or hit Run in your editor
+    uvicorn backend.main:app --reload
 """
 
 from __future__ import annotations
@@ -13,8 +13,9 @@ import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-# Running this file directly puts ``app/`` on sys.path, not the project root,
-# so ``import app`` fails. Put the project root first before anything else.
+# Running this file directly puts ``backend/`` on sys.path, not the project
+# root, so ``import backend`` fails. Put the project root first before anything
+# else.
 _ROOT = str(Path(__file__).resolve().parent.parent)
 if _ROOT not in sys.path:
     sys.path.insert(0, _ROOT)
@@ -23,10 +24,10 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app import storage
-from app.config import PROJECT_ROOT, settings
-from app import backup as backup_service
-from app.routers import (
+from backend import storage
+from backend.config import PROJECT_ROOT, settings
+from backend import backup as backup_service
+from backend.routers import (
     ai,
     backup,
     entries,
@@ -35,7 +36,7 @@ from app.routers import (
     preferences,
     templates,
 )
-from app.seed_manager import install_seeds
+from backend.seed_manager import install_seeds
 
 WEB_DIR = PROJECT_ROOT / "web"
 
@@ -88,7 +89,7 @@ def main() -> None:
     """Start the dev server. Lets you just press Run on this file."""
     import uvicorn
 
-    # The reloader re-imports "app.main:app" in a subprocess, which resolves
+    # The reloader re-imports "backend.main:app" in a subprocess, which resolves
     # against the working directory — so make that the project root no matter
     # where the file was launched from.
     os.chdir(PROJECT_ROOT)
@@ -97,7 +98,7 @@ def main() -> None:
     port = int(os.getenv("JOURNAL_PORT", "8888"))
     reload = os.getenv("JOURNAL_RELOAD", "1") != "0"
     print(f"\n  每日日記  ->  http://{host}:{port}\n")
-    uvicorn.run("app.main:app", host=host, port=port, reload=reload)
+    uvicorn.run("backend.main:app", host=host, port=port, reload=reload)
 
 
 if __name__ == "__main__":

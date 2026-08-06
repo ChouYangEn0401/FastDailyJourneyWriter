@@ -6,7 +6,7 @@ exporting is pure filling-in — no API key, no network, no waiting, and the
 same entry always produces the same page.
 
 Adding a design means dropping two files into ``data/layouts/``. That is also
-how the optional layout designer in ``app/ai/layout_designer.py`` works: it
+how the optional layout designer in ``backend/ai/layout_designer.py`` works: it
 writes a new design there once, and from then on it costs nothing to use.
 """
 
@@ -17,16 +17,16 @@ import html
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
-from app.config import PROJECT_ROOT, settings
-from app.models import Entry, JournalTemplate
-from app.render.document import RenderedDoc, build_document
-from app.render.layout_registry import (
+from backend.config import PROJECT_ROOT, settings
+from backend.models import Entry, JournalTemplate
+from backend.render.document import RenderedDoc, build_document
+from backend.render.layout_registry import (
     FALLBACK_LAYOUT,
     get_layout,
     template_filename,
 )
-from app.render.themes import get_theme
-from app.richtext import Run
+from backend.render.themes import get_theme
+from backend.richtext import Run
 
 #: Shipped partials (cover markup, shared tokens) live next to the seeds so a
 #: user layout can include them even if they deleted their copy.

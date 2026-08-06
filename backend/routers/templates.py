@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException
 
-from app.models import JournalTemplate
-from app.render.themes import theme_summaries
-from app.seed_manager import restore_default
-from app.services import entries_using_template, require_template
-from app.template_registry import all_templates, delete_template, save_template
+from backend.models import JournalTemplate
+from backend.render.themes import theme_summaries
+from backend.seed_manager import restore_default
+from backend.services import entries_using_template, require_template
+from backend.template_registry import all_templates, delete_template, save_template
 
 router = APIRouter(prefix="/api", tags=["templates"])
 

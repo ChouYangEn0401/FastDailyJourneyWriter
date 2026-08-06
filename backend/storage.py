@@ -11,8 +11,8 @@ import sqlite3
 from datetime import date, datetime
 from typing import Any, Iterator
 
-from app.config import settings
-from app.models import Entry, EntryCreate, EntryUpdate
+from backend.config import settings
+from backend.models import Entry, EntryCreate, EntryUpdate
 
 _SCHEMA = """
 CREATE TABLE IF NOT EXISTS entries (
@@ -90,7 +90,7 @@ def _plain_length(answers: dict[str, Any], closing: str) -> int:
     Used to decide whether a save is destroying text, so it counts the same
     way for every shape an answer can take.
     """
-    from app.richtext import to_plain
+    from backend.richtext import to_plain
 
     parts = [to_plain(closing)]
     for value in answers.values():

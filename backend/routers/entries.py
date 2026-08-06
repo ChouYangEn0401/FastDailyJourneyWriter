@@ -7,11 +7,11 @@ from datetime import date
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from app import storage
-from app.models import Entry, EntryCreate, EntryRevision, EntryUpdate, FieldKind
-from app.richtext import sanitize, to_plain
-from app.template_registry import get_template
-from app.services import (
+from backend import storage
+from backend.models import Entry, EntryCreate, EntryRevision, EntryUpdate, FieldKind
+from backend.richtext import sanitize, to_plain
+from backend.template_registry import get_template
+from backend.services import (
     orphan_answers,
     require_entry,
     require_template,

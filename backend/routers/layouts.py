@@ -5,16 +5,16 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.ai.client import AIRefused, AIUnavailable, is_available
-from app.ai.layout_designer import design_layout
-from app.models import Layout, LayoutDesignRequest
-from app.render.layout_registry import (
+from backend.ai.client import AIRefused, AIUnavailable, is_available
+from backend.ai.layout_designer import design_layout
+from backend.models import Layout, LayoutDesignRequest
+from backend.render.layout_registry import (
     delete_layout,
     get_layout,
     read_layout_html,
     save_layout,
 )
-from app.seed_manager import restore_default
+from backend.seed_manager import restore_default
 
 router = APIRouter(prefix="/api/layouts", tags=["layouts"])
 
@@ -35,7 +35,7 @@ class DesignResult(BaseModel):
 
 @router.get("", response_model=list[Layout])
 def list_layouts() -> list[Layout]:
-    from app.render.layout_registry import all_layouts
+    from backend.render.layout_registry import all_layouts
 
     return all_layouts()
 

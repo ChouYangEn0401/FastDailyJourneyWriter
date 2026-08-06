@@ -3,7 +3,7 @@
 Three layers of safety sit under the editor, each catching what the one above
 it cannot:
 
-1. **Entry revisions** (:mod:`app.storage`) — undo a single bad save.
+1. **Entry revisions** (:mod:`backend.storage`) — undo a single bad save.
 2. **Snapshots** (here) — undo a bad *release*: a code change that corrupts
    many entries at once is still recoverable, because a copy of the whole
    database is taken before anything risky and on a rolling schedule.
@@ -25,9 +25,9 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from app import preferences, storage
-from app.config import settings
-from app.models import BackupInfo
+from backend import preferences, storage
+from backend.config import settings
+from backend.models import BackupInfo
 
 log = logging.getLogger(__name__)
 
@@ -225,7 +225,7 @@ def import_all(document: dict[str, Any], *, replace: bool = False) -> dict[str, 
         for e in storage.list_entries(limit=100_000)
     }
 
-    from app.models import EntryCreate
+    from backend.models import EntryCreate
 
     for raw in document.get("entries", []):
         key = (raw.get("entry_date"), raw.get("title", ""), raw.get("template_id"))
@@ -266,7 +266,7 @@ def import_all(document: dict[str, Any], *, replace: bool = False) -> dict[str, 
         counts["layouts"] += 1
 
     if document.get("preferences"):
-        from app.models import Preferences
+        from backend.models import Preferences
 
         try:
             preferences.save(Preferences.model_validate(document["preferences"]))

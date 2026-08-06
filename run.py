@@ -20,7 +20,7 @@ if sys.version_info < MIN_PYTHON:
         % (MIN_PYTHON + sys.version_info[:2] + MIN_PYTHON)
     )
 
-from app.main import main  # noqa: E402  (must come after the version check)
+from backend.main import main  # noqa: E402  (must come after the version check)
 
 if __name__ == "__main__":
     main()

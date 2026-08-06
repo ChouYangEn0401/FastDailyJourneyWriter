@@ -8,8 +8,8 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from app import backup, storage
-from app.models import BackupInfo, Entry, TrashItem
+from backend import backup, storage
+from backend.models import BackupInfo, Entry, TrashItem
 
 router = APIRouter(prefix="/api/backup", tags=["backup"])
 

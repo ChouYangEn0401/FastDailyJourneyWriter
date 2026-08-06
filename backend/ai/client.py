@@ -13,7 +13,7 @@ import json
 import logging
 from typing import Any
 
-from app.config import settings
+from backend.config import settings
 
 log = logging.getLogger(__name__)
 

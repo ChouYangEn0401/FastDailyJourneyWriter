@@ -12,13 +12,13 @@
 | 要不要按作業系統分資料夾（windows/mac）？ | **不要。** 同一份 Python 在兩邊跑，分了只會有兩份會走鐘的副本 |
 | 手機版要不要開新專案？ | **不要。** 同一個 repo，多一層資料夾就好 |
 | 手機版難在哪？ | 難的不是打包，是**後端是 Python**。Python 上不了 App Store |
-| 那要做什麼？ | 把 `app/render/` 的輸出核心搬到 JavaScript。**這件事做完，手機版剩下的都是雜事** |
+| 那要做什麼？ | 把 `backend/render/` 的輸出核心搬到 JavaScript。**這件事做完，手機版剩下的都是雜事** |
 
 ---
 
 ## 一、為什麼不按作業系統分資料夾
 
-整個 `app/` 裡面沒有任何一行跟作業系統有關的程式碼（沒有 `sys.platform`、
+整個 `backend/` 裡面沒有任何一行跟作業系統有關的程式碼（沒有 `sys.platform`、
 沒有 `os.name`、沒有寫死的路徑分隔符號）。Python 本來就是跨平台的，
 路徑一律走 `pathlib`。
 
@@ -50,8 +50,8 @@ run.sh     macOS / Linux  →  .venv/bin/python run.py
 |---|---|---|
 | `content/` 題組與版型 | JSON + Jinja2 | ✅ 可以，本來就是純資料 |
 | `web/` 介面 | 原生 JS | ✅ 可以 |
-| `app/render/` 輸出 HTML 與卡片 | **Python** | ❌ 不行 |
-| `app/storage.py` 存檔 | **Python + SQLite** | ❌ 不行 |
+| `backend/render/` 輸出 HTML 與卡片 | **Python** | ❌ 不行 |
+| `backend/storage.py` 存檔 | **Python + SQLite** | ❌ 不行 |
 
 （技術上有 Kivy、BeeWare、Chaquopy 這類方案可以把 Python 塞進手機，
 但體積大、啟動慢，而且 App Store 的審查對這種做法一向不友善。不建議。）
@@ -67,7 +67,7 @@ run.sh     macOS / Linux  →  .venv/bin/python run.py
 | `storage.py` / `backup.py` | 中 | SQLite → Capacitor SQLite 或 IndexedDB。**歷史版本、垃圾桶那套邏輯要一起搬** |
 | `render/card_svg.py` + `textlayout.py` | **高** | 手算 SVG 排版 + 中英混排斷行（含避頭尾）。最花時間的一塊 |
 
-> **`content/` 已經先搬出 `app/` 了**（本來在 `app/seed/`）。
+> **`content/` 已經先搬出後端了**（本來在 `app/seed/`）。
 > 那一層沒有一行 Python，將來任何客戶端都可以直接沿用同一批檔案——
 > 題目怎麼問、版面長什麼樣，是這個工具最有價值的部分，不該綁在後端上。
 
@@ -139,20 +139,24 @@ B（Capacitor 上架）
 **系統隔離是對的直覺，但隔離的單位是資料夾，不是 repo。**
 資料夾邊界配上「哪一層可以 import 哪一層」的規矩，就已經是隔離了。
 
-手機版真的開始做的時候，長這樣：
+骨架**現在就已經建好了**，手機版開始做的時候只要把東西填進去：
 
 ```
 content/          共用：題組、版型          ← 誰都可以用
-core/             共用：JS 輸出核心          ← web 和 mobile 共用
-web/              瀏覽器介面（用 core）
-app/              Python 後端（桌機，用 content）
-mobile/
+backend/          Python 後端（桌機，用 content）
+web/              瀏覽器介面
+core/             共用：JS 輸出核心 ← 還沒有，路線 A 的產物
+platforms/
+  desktop/        PyInstaller 打包（Windows + macOS 共用）
   ios/            Xcode 產生的殼
   android/        Android Studio 產生的殼
 ```
 
-規矩只有一條：**`mobile/ios/` 和 `mobile/android/` 裡面不寫商業邏輯。**
-那兩個資料夾只放圖示、簽章設定、權限宣告。所有真正的程式碼都在 `core/`。
+規矩只有一條：**`platforms/` 底下不寫商業邏輯。**
+那些資料夾只放圖示、簽章設定、權限宣告、打包腳本。
+所有真正的程式碼都在 `backend/`（桌機）或 `core/`（手機）。
+
+完整的規矩寫在 [platforms/README.md](../platforms/README.md)。
 
 ---
 
@@ -164,9 +168,9 @@ mobile/
 
 | 工具 | 開哪個資料夾 | 什麼時候用 |
 |---|---|---|
-| **VSCode** | 整個 repo | 平常 99% 的時間。寫 `content/`、`core/`、`web/`、`app/` |
-| **Xcode** | 只開 `mobile/ios/` | 設簽章憑證、改圖示、跑模擬器、送審。一週開不到一次 |
-| **Android Studio** | 只開 `mobile/android/` | 設簽章、Gradle、跑模擬器、產 `.aab` |
+| **VSCode** | 整個 repo | 平常 99% 的時間。寫 `content/`、`backend/`、`web/`、`core/` |
+| **Xcode** | 只開 `platforms/ios/` | 設簽章憑證、改圖示、跑模擬器、送審。一週開不到一次 |
+| **Android Studio** | 只開 `platforms/android/` | 設簽章、Gradle、跑模擬器、產 `.aab` |
 
 用 Capacitor 或 React Native 的團隊全都是這樣工作的。
 沒有人在 Xcode 裡寫共用邏輯——那些檔案根本不在 iOS 專案裡。

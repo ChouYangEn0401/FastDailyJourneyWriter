@@ -9,9 +9,9 @@ from __future__ import annotations
 import json
 import logging
 
-from app.config import settings
-from app.models import PenColor, Preferences
-from app.richtext import normalize_color
+from backend.config import settings
+from backend.models import PenColor, Preferences
+from backend.richtext import normalize_color
 
 log = logging.getLogger(__name__)
 

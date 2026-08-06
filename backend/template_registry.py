@@ -1,7 +1,7 @@
 """Question sets, loaded from ``data/templates/*.json``.
 
 Nothing here is hard-coded. The shipped defaults are JSON files under
-``content/templates/`` that :mod:`app.seed_manager` copies into
+``content/templates/`` that :mod:`backend.seed_manager` copies into
 ``data/templates/`` on first run; from then on they are ordinary files the
 user can edit, duplicate or delete. Anything else dropped into that directory
 shows up alongside them.
@@ -15,8 +15,8 @@ from __future__ import annotations
 import json
 import logging
 
-from app.config import settings
-from app.models import JournalTemplate
+from backend.config import settings
+from backend.models import JournalTemplate
 
 log = logging.getLogger(__name__)
 

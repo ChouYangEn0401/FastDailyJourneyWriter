@@ -11,8 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 
-from app.models import Entry, FieldKind, JournalTemplate, TemplateField
-from app.richtext import Run, to_plain, to_runs
+from backend.models import Entry, FieldKind, JournalTemplate, TemplateField
+from backend.richtext import Run, to_plain, to_runs
 
 WEEKDAYS_ZH = ["一", "二", "三", "四", "五", "六", "日"]
 

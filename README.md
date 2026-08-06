@@ -100,7 +100,7 @@ python run.py
 | `JOURNAL_RELOAD` | `1` | 設成 `0` 關掉改檔自動重啟 |
 | `JOURNAL_DATA_DIR` | `data` | 把日記存到別的地方（例如雲端同步資料夾） |
 
-也可以用 `uvicorn app.main:app --reload` 自己起。
+也可以用 `uvicorn backend.main:app --reload` 自己起。
 </details>
 
 ---
@@ -309,8 +309,8 @@ data/
 
 ## 專案結構
 
-分成四層，**由內而外越來越跟平台有關**。這樣分是為了讓最有價值的東西
-（題目怎麼問、版面長什麼樣）不綁在 Python 上。
+分成五層，**由上而下越來越跟平台有關**。這樣分是為了讓最有價值的東西
+（題目怎麼問、版面長什麼樣）不綁在 Python 上，也不綁在任何一個作業系統上。
 
 ```
 content/                 ── 產品內容。純資料，沒有一行 Python
@@ -318,8 +318,8 @@ content/                 ── 產品內容。純資料，沒有一行 Python
   layouts/<id>.html.j2     4 種版型（Jinja2）＋ 共用的封面、色彩 token
   layouts/<id>.json        版型的名字、說明、標籤
 
-app/                     ── 後端（Python）
-  main.py                FastAPI；也可以直接 python app/main.py
+backend/                 ── 後端（Python）。四種平台共用同一份
+  main.py                FastAPI；也可以直接 python backend/main.py
   models.py              題組 / 版型 / 日記 / 偏好的 schema
   storage.py             SQLite、歷史版本、垃圾桶、防覆蓋
   backup.py              資料庫快照、匯出匯入
@@ -340,19 +340,34 @@ app/                     ── 後端（Python）
 
 web/                     ── 前端（原生 JS，不需要 build）
 
+platforms/               ── 只放「怎麼包成給人用的東西」，不放任何邏輯
+  desktop/                 Windows 與 macOS 桌機版打包（共用同一份設定）
+  ios/                     iPhone / iPad（規劃中）
+  android/                 Android（規劃中）
+
 data/                    ── 你的東西。gitignore，永遠不進 repo
 ```
 
-`content/` 刻意放在 `app/` 外面：那裡面沒有任何東西跟 Python 有關，
-所以將來如果有別的客戶端（手機版、純瀏覽器版），可以直接沿用同一批檔案。
+**上面三層（`content/`、`backend/`、`web/`）不知道自己跑在哪個作業系統上。**
+所有平台差異都關在 `platforms/` 裡面。這條界線是刻意的：
+`backend/` 裡沒有任何一行 `sys.platform`，所以 Windows 和 macOS 跑的是同一份程式碼，
+不需要、也不應該有兩份副本。
+
+`content/` 又再放在 `backend/` 外面，因為那裡面沒有任何東西跟 Python 有關——
+將來如果有別的客戶端（手機版、純瀏覽器版），可以直接沿用同一批檔案。
 啟動時 `seed_manager.py` 把它複製一份到 `data/`，從此你改的是 `data/` 那份，
 升級程式不會蓋掉你的修改。
+
+各層的規矩寫在 **[platforms/README.md](platforms/README.md)**。
 
 其他檔案：
 
 ```
-run.py / run.bat / run.sh   啟動（bat 給 Windows，sh 給 macOS/Linux）
-requirements.txt            相依套件
+run.bat / run.sh            開發時啟動（bat 給 Windows，sh 給 macOS/Linux）
+build_desktop.bat / .sh     打包成 .exe / .app
+run.py                      實際的進入點，上面四個都是叫它
+requirements.txt            執行需要的套件
+requirements-dev.txt        打包、測試才需要的套件
 pyproject.toml              專案資訊、Python 版本下限、ruff 設定
 LICENSE                     AGPL-3.0
 CONTRIBUTING.md             想幫忙的話從這裡開始

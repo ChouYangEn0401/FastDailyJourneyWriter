@@ -5,12 +5,12 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.ai.artifact import suggest_title
-from app.ai.client import AIRefused, AIUnavailable, is_available
-from app.ai.image_prompt import STYLES, build_image_prompt
-from app.models import ImagePromptRequest, ImagePromptResponse
-from app.render.document import build_document
-from app.services import require_entry
+from backend.ai.artifact import suggest_title
+from backend.ai.client import AIRefused, AIUnavailable, is_available
+from backend.ai.image_prompt import STYLES, build_image_prompt
+from backend.models import ImagePromptRequest, ImagePromptResponse
+from backend.render.document import build_document
+from backend.services import require_entry
 
 router = APIRouter(prefix="/api/ai", tags=["ai"])
 
@@ -26,7 +26,7 @@ class TitleResult(BaseModel):
 @router.get("/status")
 def status() -> dict[str, object]:
     """Which optional features are switched on. Exports never depend on this."""
-    from app.config import settings
+    from backend.config import settings
 
     return {"available": is_available(), "model": settings.model}
 

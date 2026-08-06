@@ -6,16 +6,16 @@ from typing import Any
 
 from fastapi import HTTPException
 
-from app import storage
-from app.models import (
+from backend import storage
+from backend.models import (
     Entry,
     FieldKind,
     JournalTemplate,
     TemplateField,
     TemplateSection,
 )
-from app.richtext import normalize_color, sanitize
-from app.template_registry import get_template
+from backend.richtext import normalize_color, sanitize
+from backend.template_registry import get_template
 
 MAX_LIST_ROWS = 40
 MAX_TEXT_CHARS = 20_000

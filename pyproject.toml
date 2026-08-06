@@ -27,7 +27,7 @@ Homepage = "https://github.com/ChouYangEn0401/FastDailyJourneyWriter"
 # package explicitly keeps setuptools from trying to auto-discover one from the
 # flat layout, where ``web/``, ``content/`` and ``docs/`` are not packages.
 [tool.setuptools]
-packages = ["app", "app.ai", "app.render", "app.routers"]
+packages = ["backend", "backend.ai", "backend.render", "backend.routers"]
 
 [tool.ruff]
 target-version = "py311"

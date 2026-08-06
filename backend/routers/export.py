@@ -12,13 +12,13 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel
 
-from app.config import settings
-from app.models import ArtifactRequest, CardRequest
-from app.render.artifact_html import render_document
-from app.render.card_svg import render_document_svg
-from app.render.document import build_document
-from app.render.layout_registry import get_layout
-from app.services import require_entry
+from backend.config import settings
+from backend.models import ArtifactRequest, CardRequest
+from backend.render.artifact_html import render_document
+from backend.render.card_svg import render_document_svg
+from backend.render.document import build_document
+from backend.render.layout_registry import get_layout
+from backend.services import require_entry
 
 router = APIRouter(prefix="/api/export", tags=["export"])
 
