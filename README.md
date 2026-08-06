@@ -39,15 +39,69 @@
 
 ## 安裝與啟動
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate          # Windows
+### 需要什麼
+
+| | |
+|---|---|
+| **Python** | **3.11 或更新的版本**（在 3.11 上開發與測試）。下載：[**Python 3.11**](https://www.python.org/downloads/release/python-3119/) ｜ [其他版本](https://www.python.org/downloads/) |
+| **其他** | 沒有了。不用 Node.js、不用資料庫、前端沒有 build 步驟。 |
+| **硬碟** | 大約 90 MB（含相依套件） |
+
+> **Windows 安裝 Python 時，記得勾選最下面的 `Add python.exe to PATH`。**
+> 沒勾的話下面的指令會說「找不到 python」。
+>
+> 已經裝好了？用 `python --version` 確認一下是不是 3.11 以上。
+> 如果電腦裡有好幾個版本，Windows 用 `py -3.11`、macOS／Linux 用 `python3.11` 指定。
+
+### Windows
+
+```powershell
+git clone https://github.com/ChouYangEn0401/FastDailyJourneyWriter.git
+cd FastDailyJourneyWriter
+
+py -3.11 -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
-python run.py                   # 或 python app/main.py
+
+python run.py
 ```
 
-打開 <http://127.0.0.1:8888>。（也可以 `uvicorn app.main:app --reload`。）
-環境變數：`JOURNAL_PORT`、`JOURNAL_HOST`、`JOURNAL_RELOAD=0`、`JOURNAL_DATA_DIR`。
+之後每次要開，按兩下 **`run.bat`** 就好（不用先 activate）。
+
+### macOS / Linux
+
+```bash
+git clone https://github.com/ChouYangEn0401/FastDailyJourneyWriter.git
+cd FastDailyJourneyWriter
+
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+python run.py
+```
+
+之後每次要開：**`./run.sh`**（第一次要先 `chmod +x run.sh`）。
+
+### 然後
+
+程式會自己開一個本機伺服器，打開瀏覽器到 **<http://127.0.0.1:8888>** 就可以寫了。
+第一次啟動時，內建的 19 個題組與 4 種版型會被複製到 `data/`。
+
+要停止：在終端機按 `Ctrl + C`。
+
+<details>
+<summary>可以調整的環境變數</summary>
+
+| 變數 | 預設 | 做什麼 |
+|---|---|---|
+| `JOURNAL_PORT` | `8888` | 換一個埠號（`8888` 被別的程式佔用時） |
+| `JOURNAL_HOST` | `127.0.0.1` | 設成 `0.0.0.0` 可以讓同一個 Wi-Fi 下的手機連進來 |
+| `JOURNAL_RELOAD` | `1` | 設成 `0` 關掉改檔自動重啟 |
+| `JOURNAL_DATA_DIR` | `data` | 把日記存到別的地方（例如雲端同步資料夾） |
+
+也可以用 `uvicorn app.main:app --reload` 自己起。
+</details>
 
 ---
 
@@ -218,8 +272,9 @@ data/
 ### 自己做一個題組
 
 一個題組就是一個 JSON 檔。最短的可用範例、七種題目型態、每個鍵的意思，
-還有內建那 17 個是照什麼原則寫的，都在 **[docs/templates.md](docs/templates.md)**。
-做了好用的題組，歡迎開 PR 放進 `app/seed/templates/`。
+還有內建那 19 個是照什麼原則寫的，都在 **[docs/templates.md](docs/templates.md)**。
+做了好用的題組，歡迎開 PR 放進 `content/templates/`——
+怎麼開 PR 看 **[CONTRIBUTING.md](CONTRIBUTING.md)**。
 
 ### 自己做一個版型
 
@@ -248,25 +303,31 @@ data/
 - 日記、匯出檔、備份、你改過的題組與版型都在 `data/`，已被 `.gitignore` 擋掉。
 - `.gitignore` 也擋掉所有 `*.png` / `*.jpg`，避免不小心把真實日記的截圖 commit 進來。
   唯一的例外是 `docs/images/`，那裡的圖片全部是編出來的範例（見該資料夾的 README）。
-- `app/seed/` 裡的預設題組只有題目結構、選項與段落顏色，沒有任何人的答案。
+- `content/` 裡的預設題組只有題目結構、選項與段落顏色，沒有任何人的答案。
 
 ---
 
 ## 專案結構
 
+分成四層，**由內而外越來越跟平台有關**。這樣分是為了讓最有價值的東西
+（題目怎麼問、版面長什麼樣）不綁在 Python 上。
+
 ```
-run.py                   啟動
-app/
+content/                 ── 產品內容。純資料，沒有一行 Python
+  templates/*.json         19 個內建題組
+  layouts/<id>.html.j2     4 種版型（Jinja2）＋ 共用的封面、色彩 token
+  layouts/<id>.json        版型的名字、說明、標籤
+
+app/                     ── 後端（Python）
   main.py                FastAPI；也可以直接 python app/main.py
   models.py              題組 / 版型 / 日記 / 偏好的 schema
   storage.py             SQLite、歷史版本、垃圾桶、防覆蓋
   backup.py              資料庫快照、匯出匯入
   preferences.py         顏色與慣用設定
-  seed_manager.py        第一次啟動把預設複製到 data/
+  seed_manager.py        第一次啟動把 content/ 複製到 data/
   template_registry.py   讀 data/templates/
   richtext.py            HTML 白名單清理、色彩 run 解析
   services.py            答案清理、載入、題組刪除後的救援視圖
-  seed/                  出廠預設（題組 JSON、版型 j2）
   render/
     document.py          Entry + Template -> 兩個 renderer 共用的結構
     layout_registry.py   讀 data/layouts/
@@ -276,10 +337,29 @@ app/
     themes.py            五組紙張顏色
   ai/                    選配：版型設計、標題、繪圖 prompt
   routers/               FastAPI 路由
-web/                     前端（原生 JS，不需要 build）
-docs/templates.md        內建題組一覽 ＋ 自己寫題組的說明書
-docs/images/             README 用的截圖（虛構內容）
-IDEAS.md                 討論過但還沒做的想法
+
+web/                     ── 前端（原生 JS，不需要 build）
+
+data/                    ── 你的東西。gitignore，永遠不進 repo
+```
+
+`content/` 刻意放在 `app/` 外面：那裡面沒有任何東西跟 Python 有關，
+所以將來如果有別的客戶端（手機版、純瀏覽器版），可以直接沿用同一批檔案。
+啟動時 `seed_manager.py` 把它複製一份到 `data/`，從此你改的是 `data/` 那份，
+升級程式不會蓋掉你的修改。
+
+其他檔案：
+
+```
+run.py / run.bat / run.sh   啟動（bat 給 Windows，sh 給 macOS/Linux）
+requirements.txt            相依套件
+pyproject.toml              專案資訊、Python 版本下限、ruff 設定
+LICENSE                     AGPL-3.0
+CONTRIBUTING.md             想幫忙的話從這裡開始
+IDEAS.md                    討論過但還沒做的想法
+docs/templates.md           內建題組一覽 ＋ 自己寫題組的說明書
+docs/roadmap.md             接下來的方向（含手機版怎麼走）
+docs/images/                README 用的截圖（虛構內容）
 ```
 
 ## API
@@ -313,3 +393,19 @@ POST   /api/export/html            產生頁面
 POST   /api/export/card            產生卡片 SVG
 POST   /api/ai/image-prompt        繪圖 prompt（沒 key 有 fallback）
 ```
+
+---
+
+## 授權
+
+**[GNU AGPL-3.0](LICENSE)**。白話說：
+
+- **自己用，完全自由**，永遠免費。個人、教會、小組、公司內部都一樣，不用問、不用付錢。
+- **可以改、可以散布**——但如果你把改過的版本給別人用，或架成網路服務讓別人連，
+  你也要把你改過的原始碼一起公開。
+- 想在**閉源**的產品裡使用，請來信談授權。
+
+## 想幫忙？
+
+最歡迎的貢獻是**新的題組**——一個 JSON 檔而已，
+看 [docs/templates.md](docs/templates.md) 和 [CONTRIBUTING.md](CONTRIBUTING.md)。

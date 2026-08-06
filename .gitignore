@@ -36,3 +36,16 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Native IDE output, if an iOS/Android shell is ever added. Xcode and Android
+# Studio both generate large machine-specific trees next to their project files.
+node_modules/
+dist/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+local.properties
+.gradle/
+build/
+*.apk
+*.aab
