@@ -2,8 +2,9 @@
 
 Nothing the app renders is hard-coded in Python. Question sets live in
 ``data/templates/*.json`` and page designs live in ``data/layouts/``. This
-module copies the shipped defaults there once, so a fresh install is usable
-immediately and every default is then an ordinary editable file.
+module copies the shipped defaults from ``content/`` there once, so a fresh
+install is usable immediately and every default is then an ordinary editable
+file.
 
 A manifest records what has already been installed, so deleting or editing a
 default sticks — it will not silently come back on the next boot.
@@ -16,11 +17,14 @@ import logging
 import shutil
 from pathlib import Path
 
-from app.config import settings
+from app.config import PROJECT_ROOT, settings
 
 log = logging.getLogger(__name__)
 
-SEED_DIR = Path(__file__).parent / "seed"
+#: The shipped question sets and page designs. They live outside ``app/``
+#: because they are plain content, not Python — nothing in them is specific to
+#: this backend, so any future client can ship the same files.
+SEED_DIR = PROJECT_ROOT / "content"
 
 
 def _load_manifest() -> set[str]:

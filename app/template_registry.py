@@ -1,7 +1,7 @@
 """Question sets, loaded from ``data/templates/*.json``.
 
 Nothing here is hard-coded. The shipped defaults are JSON files under
-``app/seed/templates/`` that :mod:`app.seed_manager` copies into
+``content/templates/`` that :mod:`app.seed_manager` copies into
 ``data/templates/`` on first run; from then on they are ordinary files the
 user can edit, duplicate or delete. Anything else dropped into that directory
 shows up alongside them.

@@ -13,12 +13,11 @@ writes a new design there once, and from then on it costs nothing to use.
 from __future__ import annotations
 
 import html
-from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from markupsafe import Markup
 
-from app.config import settings
+from app.config import PROJECT_ROOT, settings
 from app.models import Entry, JournalTemplate
 from app.render.document import RenderedDoc, build_document
 from app.render.layout_registry import (
@@ -31,7 +30,7 @@ from app.richtext import Run
 
 #: Shipped partials (cover markup, shared tokens) live next to the seeds so a
 #: user layout can include them even if they deleted their copy.
-SEED_LAYOUT_DIR = Path(__file__).parent.parent / "seed" / "layouts"
+SEED_LAYOUT_DIR = PROJECT_ROOT / "content" / "layouts"
 
 
 def runs_to_html(runs: list[Run]) -> Markup:
