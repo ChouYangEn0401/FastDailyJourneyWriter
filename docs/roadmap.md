@@ -103,18 +103,21 @@ run.sh     macOS / Linux  →  .venv/bin/python run.py
   Apple 開發者帳號約每年 US$99、Google Play 約一次性 US$25（以官方公告為準）；
   每次改版都要等審查
 
-### 路線 C — 桌機打包（隨時可以做，跟 A/B 沒衝突）
+### 路線 C — 桌機打包 ✅ 已完成
 
 用 PyInstaller 把現在的程式包成 `.exe` / `.app`，使用者不用裝 Python。
 
-- **成本**：低，大概幾天
+- **狀態**：**可以用了。** `build_desktop.bat` / `build_desktop.sh`，
+  產出約 32 MB。設定在 [platforms/desktop/](../platforms/desktop/)
 - **好處**：**現在就能讓不會用終端機的人使用**。以推廣來說 CP 值最高
 - **代價**：不解決手機
+- **還沒做**：圖示、程式碼簽章、安裝檔。清單在
+  [platforms/desktop/README.md](../platforms/desktop/README.md)
 
 ### 建議順序
 
 ```
-C（桌機打包，幾天）
+C（桌機打包）                   ← ✅ 已完成
      ↓  先讓一般人用得到，收真實回饋
 A（移植核心到 JS + PWA）        ← 真正的工作量都在這裡
      ↓  同一批人可以直接在手機上用
@@ -123,6 +126,9 @@ B（Capacitor 上架）
 
 先做 C 的理由：**在投入移植之前，先確認有人真的會用。**
 移植是幾個月的事，值得先用幾天的打包換到真實回饋。
+
+**所以現在的下一步不是寫程式，是把桌機版發出去看看反應。**
+在有人真的用之前，A 的幾個月投入沒有根據。
 
 ---
 

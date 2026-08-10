@@ -12,7 +12,15 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
+#: Where the shipped read-only files (``content/``, ``web/``) live. From a
+#: checkout that is the repo root. A packaged build unpacks them somewhere
+#: else and says so in ``JOURNAL_BUNDLE_DIR`` — that indirection is the only
+#: thing this module knows about being packaged, and it keeps every
+#: OS-specific decision in ``platforms/desktop/launcher.py``.
+_bundle = os.getenv("JOURNAL_BUNDLE_DIR")
+PROJECT_ROOT = (
+    Path(_bundle).resolve() if _bundle else Path(__file__).resolve().parent.parent
+)
 
 load_dotenv(PROJECT_ROOT / ".env")
 

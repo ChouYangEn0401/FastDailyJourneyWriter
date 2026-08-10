@@ -103,6 +103,12 @@ python run.py
 也可以用 `uvicorn backend.main:app --reload` 自己起。
 </details>
 
+### 想給沒裝 Python 的人用
+
+在專案根目錄執行 `build_desktop.bat`（Windows）或 `./build_desktop.sh`（macOS／Linux），
+會打包成一個約 32 MB 的資料夾，壓縮起來傳給人，對方解壓縮按兩下就能開。
+細節看 **[platforms/desktop/README.md](platforms/desktop/README.md)**。
+
 ---
 
 ## 輸出：同一篇日記，兩種形狀
