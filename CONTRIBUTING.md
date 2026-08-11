@@ -52,6 +52,36 @@ JOURNAL_DATA_DIR=/tmp/journal-dev python run.py
 
 ---
 
+## 測試
+
+目前只有 [`core/`](core/README.md) 有測試。要跑的話需要 Node 18 以上，
+不需要 `npm install`（零相依，用 Node 內建的 test runner）：
+
+```bash
+cd core
+node --test "test/*.test.js"
+```
+
+### 改了 `backend/richtext.py` 或 `backend/render/` 的話
+
+`core/` 是那些檔案的 JavaScript 移植，手機版要用。
+兩份實作必須一致，所以測試的預期值是**從 Python 錄下來的**，不是手寫的：
+
+```bash
+python core/test/tools/dump_parity.py     # 重新產生對照用的 fixture
+```
+
+跑完之後 `git diff` 看 `core/test/fixtures/parity.json`：
+
+- **有 diff，而且是你想要的改動** → 把 `core/` 也改成一樣，兩個都提交
+- **有 diff，但你沒打算改行為** → 那大概是個 bug，先別提交
+- **沒有 diff** → 沒事，繼續
+
+沒有這一步的話，兩份實作會慢慢分岔，而分岔的症狀是
+「同一篇日記在手機和電腦上輸出得不一樣」——很難查。
+
+---
+
 ## 兩條規矩
 
 ### 一、絕對不要提交任何真實的日記內容
@@ -88,5 +118,7 @@ JOURNAL_DATA_DIR=/tmp/journal-dev python run.py
 
 - 註解寫**為什麼**，不寫在做什麼
 - 使用者看得到的文字用繁體中文；程式碼、註解、commit 訊息用英文
-- 前端沒有 build 步驟，也請不要引入——`web/` 就是三個檔案，能直接開來看
+- 前端沒有 build 步驟，也請不要引入——`web/` 和 `core/` 都是直接開就看得懂的檔案
 - 不加相依套件，除非真的沒有別的辦法
+- 手機版介面跟桌機版是**同一份** `web/`，差別只有 820px 以下的那段 CSS。
+  改版面前先看 [docs/mobile-ui.md](docs/mobile-ui.md)
