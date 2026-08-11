@@ -82,6 +82,45 @@ const stripHtml = (html) => {
 const slug = (s) =>
   (s || "").trim().toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "");
 
+// -------------------------------------------------------- phone screens
+
+/**
+ * A narrow screen shows one of four screens at a time — 寫 / 題組 / 輸出 / 日記
+ * — because stacking them puts four panels of pickers above the writing area.
+ * A wide screen shows everything at once and ignores all of this; the CSS below
+ * 820px is what makes `data-view` mean anything.
+ *
+ * Nothing here moves an element. Hidden panels are still in the document, so
+ * buildForm() and collect() go on reading exactly the same nodes.
+ */
+const PHONE_LAYOUT = window.matchMedia("(max-width: 820px)");
+
+function setView(name) {
+  document.body.dataset.view = name;
+  for (const tab of $$(".tab")) {
+    if (tab.dataset.tab === name) tab.setAttribute("aria-current", "page");
+    else tab.removeAttribute("aria-current");
+  }
+  window.scrollTo({ top: 0 });
+}
+
+/** Picking a question set, or opening an older day, is a step *towards*
+ *  writing — so give the writing screen back instead of leaving someone
+ *  looking at the list they just used. */
+function backToEditor() {
+  if (PHONE_LAYOUT.matches) setView("write");
+}
+
+/** The on-screen keyboard already takes half the screen. The tab bar gets out
+ *  of the way while it is up; you cannot switch screens mid-sentence anyway. */
+function syncTypingState() {
+  const el = document.activeElement;
+  const typing = Boolean(
+    el?.closest?.('input:not([type=color]), textarea, [contenteditable="true"]')
+  );
+  document.body.classList.toggle("typing", typing);
+}
+
 // ------------------------------------------------------------ form build
 
 function fieldColor(field, section) {
@@ -590,6 +629,7 @@ function applyEntry(entry) {
 async function openEntry(id) {
   if (state.dirty) await save(true);
   applyEntry(await api(`/api/entries/${id}`));
+  backToEditor();
   await loadEntries();
 }
 
@@ -603,6 +643,7 @@ function newEntry() {
   $("#entry-title").value = "";
   $("#closing").innerHTML = "";
   buildForm();
+  backToEditor();
   loadEntries();
   setSaveHint("");
   state.dirty = false;
@@ -702,6 +743,7 @@ async function switchTemplate(tpl) {
   renderLayoutPicker();
   renderThemePicker();
   buildForm();
+  backToEditor();
   markDirty();
 }
 
@@ -1588,6 +1630,16 @@ function applyPrefs(prefs) {
 // ------------------------------------------------------------ wiring
 
 function wire() {
+  $("#tabbar").addEventListener("click", (e) => {
+    const tab = e.target.closest(".tab");
+    if (tab) setView(tab.dataset.tab);
+  });
+  document.addEventListener("focusin", syncTypingState);
+  // Deferred: focusout fires before the next element's focusin, so reading the
+  // active element immediately would flash the tab bar back on every time you
+  // move from one question to the next.
+  document.addEventListener("focusout", () => setTimeout(syncTypingState, 0));
+
   $("#btn-new").addEventListener("click", newEntry);
   $("#btn-save").addEventListener("click", () => save(false));
   $("#btn-tidy").addEventListener("click", () => tidyEmpty().catch((e) => toast(e.message, true)));
@@ -1673,8 +1725,26 @@ function wire() {
   });
 }
 
+/**
+ * Register the shell cache, if the browser will allow it.
+ *
+ * It usually will not, and that is fine. Browsers only accept a service worker
+ * over HTTPS or on localhost, so running the desktop app and opening it from a
+ * phone on the same network — an http:// LAN address — silently skips this.
+ * The app works exactly the same either way; the worker only decides whether
+ * the window opens when the server is unreachable.
+ */
+function registerServiceWorker() {
+  if (!("serviceWorker" in navigator) || !window.isSecureContext) return;
+  navigator.serviceWorker.register("/sw.js").catch(() => {
+    // Nothing to tell the reader. Failing to cache the interface changes
+    // nothing about writing, saving or exporting.
+  });
+}
+
 async function init() {
   wire();
+  registerServiceWorker();
   setupPalette();
   setupTemplateEditor();
 
@@ -1708,9 +1778,13 @@ async function init() {
   applyPrefs(prefs);
 
   // Exports never need a key; only these two helpers do.
-  $("#ai-status").textContent = health.ai_available
+  const aiStatus = health.ai_available
     ? `AI 選配功能已啟用（${health.model}）`
     : "未設定 API key — 輸出功能全部照常";
+  $("#ai-status").textContent = aiStatus;
+  // Same sentence, shown in the 輸出 screen instead when the top bar is too
+  // narrow to carry it.
+  $("#ai-status-2").textContent = aiStatus;
   $("#btn-title").disabled = !state.aiAvailable;
   $("#btn-design").disabled = !state.aiAvailable;
   if (!state.aiAvailable) {

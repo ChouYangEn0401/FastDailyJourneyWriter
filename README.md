@@ -109,6 +109,26 @@ python run.py
 會打包成一個約 32 MB 的資料夾，壓縮起來傳給人，對方解壓縮按兩下就能開。
 細節看 **[platforms/desktop/README.md](platforms/desktop/README.md)**。
 
+### 在手機上用
+
+還沒有上架的 app，但同一個 Wi-Fi 就能用：
+
+```bash
+JOURNAL_HOST=0.0.0.0 python run.py     # Windows: set JOURNAL_HOST=0.0.0.0
+```
+
+然後用手機的瀏覽器打 `http://<電腦的區網 IP>:8888`。
+
+介面在手機上會換一種排法——**底部四個分頁：寫、題組、輸出、日記**，
+一次專心一件事，打開就在寫字的那一頁。為什麼這樣排寫在
+**[docs/mobile-ui.md](docs/mobile-ui.md)**。
+
+> **這份手機介面還沒有在真的手機上開過**，只在瀏覽器的模擬寬度下看過版面。
+> 有東西壞掉的話，開一個 issue 會很有幫助。
+
+真正的手機 app 還要等輸出核心搬完，路線在
+**[docs/roadmap.md](docs/roadmap.md)**。
+
 ---
 
 ## 輸出：同一篇日記，兩種形狀
@@ -315,7 +335,7 @@ data/
 
 ## 專案結構
 
-分成五層，**由上而下越來越跟平台有關**。這樣分是為了讓最有價值的東西
+分成六層，**由上而下越來越跟平台有關**。這樣分是為了讓最有價值的東西
 （題目怎麼問、版面長什麼樣）不綁在 Python 上，也不綁在任何一個作業系統上。
 
 ```
@@ -345,9 +365,17 @@ backend/                 ── 後端（Python）。四種平台共用同一份
   routers/               FastAPI 路由
 
 web/                     ── 前端（原生 JS，不需要 build）
+                            桌機三欄、手機四個分頁，同一份檔案
+
+core/                    ── 輸出核心的 JavaScript 版。手機版用得到的那份
+  richtext.js              backend/richtext.py 的移植
+  themes.js                backend/render/themes.py 的移植
+  document.js              backend/render/document.py 的移植
+  test/                    跟 Python 逐案對照的測試（node --test，零相依）
 
 platforms/               ── 只放「怎麼包成給人用的東西」，不放任何邏輯
   desktop/                 Windows 與 macOS 桌機版打包（共用同一份設定）
+  pwa/                     圖示產生器（加到手機主畫面用）
   ios/                     iPhone / iPad（規劃中）
   android/                 Android（規劃中）
 
@@ -360,7 +388,9 @@ data/                    ── 你的東西。gitignore，永遠不進 repo
 不需要、也不應該有兩份副本。
 
 `content/` 又再放在 `backend/` 外面，因為那裡面沒有任何東西跟 Python 有關——
-將來如果有別的客戶端（手機版、純瀏覽器版），可以直接沿用同一批檔案。
+別的客戶端（手機版、純瀏覽器版）可以直接沿用同一批檔案。
+`core/` 就是第一個這樣的客戶端：它不知道 FastAPI 或 SQLite 存在，
+輸入是普通物件，輸出是字串。
 啟動時 `seed_manager.py` 把它複製一份到 `data/`，從此你改的是 `data/` 那份，
 升級程式不會蓋掉你的修改。
 
@@ -380,6 +410,7 @@ CONTRIBUTING.md             想幫忙的話從這裡開始
 IDEAS.md                    討論過但還沒做的想法
 docs/templates.md           內建題組一覽 ＋ 自己寫題組的說明書
 docs/roadmap.md             接下來的方向（含手機版怎麼走）
+docs/mobile-ui.md           手機版介面：為什麼分成四個畫面，踩到哪些坑
 docs/images/                README 用的截圖（虛構內容）
 ```
 

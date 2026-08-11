@@ -2,11 +2,21 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- viewport-fit=cover lets the layout reach under a phone's rounded corners
+     and home indicator; styles.css pays that back with env(safe-area-inset-*). -->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>每日日記</title>
+<meta name="theme-color" content="#f2efe9" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#15171b" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="每日日記">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/static/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/static/icon-180.png">
 <link rel="stylesheet" href="/static/styles.css">
 </head>
-<body>
+<body data-view="write">
 
 <header class="topbar">
   <div class="brand">
@@ -18,7 +28,7 @@
   </div>
   <div class="topbar-actions">
     <span id="save-hint" class="save-hint"></span>
-    <button id="btn-new" class="ghost">＋ 新的一天</button>
+    <button id="btn-new" class="ghost">＋<span class="btn-label"> 新的一天</span></button>
     <button id="btn-save" class="primary">儲存</button>
   </div>
 </header>
@@ -26,8 +36,10 @@
 <main class="layout">
 
   <!-- ── left rail ─────────────────────────────────────────── -->
+  <!-- data-m-tab says which phone tab a block belongs to. It does nothing on a
+       wide screen — the three-column grid stays exactly as it was. -->
   <aside class="rail">
-    <section class="panel">
+    <section class="panel" data-m-tab="setup">
       <div class="panel-head">
         <h2>題組</h2>
         <button id="btn-new-tpl" class="ghost tiny">＋ 新增</button>
@@ -36,19 +48,19 @@
       <div id="template-list" class="template-list"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-m-tab="setup">
       <h2>版型</h2>
       <p class="muted">「頁面」輸出時長什麼樣子。已經設計好了，不需要 API。</p>
       <div id="layout-list" class="template-list"></div>
       <button id="btn-design" class="ghost tiny wide" disabled>＋ 用 AI 設計新版型</button>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-m-tab="setup">
       <h2>紙張顏色</h2>
       <div id="theme-list" class="theme-list"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-m-tab="entries">
       <div class="panel-head">
         <h2>最近的日記</h2>
         <button id="btn-tidy" class="ghost tiny" hidden>清理空白</button>
@@ -60,7 +72,7 @@
   </aside>
 
   <!-- ── editor ────────────────────────────────────────────── -->
-  <section class="editor" id="editor">
+  <section class="editor" id="editor" data-m-tab="write">
     <div class="editor-head">
       <div class="field-row">
         <label for="entry-date">日期</label>
@@ -100,11 +112,14 @@
 
   <!-- ── export rail ───────────────────────────────────────── -->
   <aside class="rail right">
-    <section class="panel">
+    <section class="panel" data-m-tab="output">
       <h2>輸出</h2>
       <p class="muted">
         同一篇日記，兩種形狀。頁面是可以捲動的長版，卡片是一張圖。
       </p>
+      <!-- The top bar has no room for this on a phone, so it lands here
+           instead — next to the buttons it actually affects. -->
+      <p class="muted mobile-only" id="ai-status-2"></p>
 
       <div class="opt">
         <label class="check">
@@ -116,7 +131,7 @@
     </section>
 
     <!-- output A: page -->
-    <section class="panel out-card">
+    <section class="panel out-card" data-m-tab="output">
       <div class="out-head">
         <span class="out-icon page">▤</span>
         <div>
@@ -124,7 +139,9 @@
           <p class="muted">單一檔案，可捲動、可列印、可傳給人開。</p>
         </div>
       </div>
-      <p class="out-meta">目前版型：<b id="cur-layout">—</b>　<span class="hint">在左邊「版型」換</span></p>
+      <!-- Not "on the left": on a phone the layout picker is a screen away,
+           not a column away. -->
+      <p class="out-meta">目前版型：<b id="cur-layout">—</b>　<span class="hint">在「版型」那一區換</span></p>
       <div class="btn-row">
         <button id="btn-preview-html" class="primary">預覽</button>
         <button id="btn-download-html" class="ghost">下載 .html</button>
@@ -133,7 +150,7 @@
     </section>
 
     <!-- output B: card -->
-    <section class="panel out-card">
+    <section class="panel out-card" data-m-tab="output">
       <div class="out-head">
         <span class="out-icon card">▣</span>
         <div>
@@ -173,7 +190,7 @@
     </section>
 
     <!-- output C: drawing prompt -->
-    <section class="panel out-card">
+    <section class="panel out-card" data-m-tab="output">
       <div class="out-head">
         <span class="out-icon draw">✧</span>
         <div>
@@ -191,7 +208,7 @@
       <div id="prompt-out" class="prompt-out"></div>
     </section>
 
-    <section class="panel">
+    <section class="panel" data-m-tab="output">
       <button id="btn-remember" class="ghost wide">記住目前的設定</button>
       <p class="muted mt">
         把題組、版型、顏色、卡片設定記起來，下次開啟直接沿用。
@@ -199,6 +216,27 @@
     </section>
   </aside>
 </main>
+
+<!-- ── phone tab bar ─────────────────────────────────────────
+     Only visible on narrow screens. Without it the single-column layout puts
+     four panels of pickers above the writing area, so writing one line means
+     scrolling past every setting first. Plain buttons rather than ARIA tabs:
+     the panels are ordinary page sections, and claiming a tablist we do not
+     implement would read worse to a screen reader than saying nothing. -->
+<nav class="tabbar" id="tabbar" aria-label="切換畫面">
+  <button class="tab" data-tab="write" aria-current="page">
+    <span class="tab-ico" aria-hidden="true">✎</span>寫
+  </button>
+  <button class="tab" data-tab="setup">
+    <span class="tab-ico" aria-hidden="true">❖</span>題組
+  </button>
+  <button class="tab" data-tab="output">
+    <span class="tab-ico" aria-hidden="true">▤</span>輸出
+  </button>
+  <button class="tab" data-tab="entries">
+    <span class="tab-ico" aria-hidden="true">☰</span>日記
+  </button>
+</nav>
 
 <!-- ── palette manager ───────────────────────────────────── -->
 <dialog id="palette-dialog" class="dialog">

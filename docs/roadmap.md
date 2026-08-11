@@ -58,14 +58,19 @@ run.sh     macOS / Linux  →  .venv/bin/python run.py
 
 所以手機版不是一個「打包工作」，是一次**移植**。要移植的具體有這些：
 
-| 檔案 | 難度 | 備註 |
-|---|---|---|
-| `render/document.py` | 低 | 純資料轉換，照抄邏輯就好 |
-| `render/artifact_html.py` | 低 | Jinja2 → **Nunjucks**，語法幾乎一樣，`content/layouts/*.j2` 可以原封不動沿用 |
-| `render/themes.py` | 低 | 五組顏色常數 |
-| `richtext.py` | 中 | HTML 白名單清理、色彩 run 解析 |
-| `storage.py` / `backup.py` | 中 | SQLite → Capacitor SQLite 或 IndexedDB。**歷史版本、垃圾桶那套邏輯要一起搬** |
-| `render/card_svg.py` + `textlayout.py` | **高** | 手算 SVG 排版 + 中英混排斷行（含避頭尾）。最花時間的一塊 |
+| 檔案 | 難度 | 狀態 | 備註 |
+|---|---|---|---|
+| `render/document.py` | 低 | ✅ | 純資料轉換，照抄邏輯就好 |
+| `render/themes.py` | 低 | ✅ | 五組顏色常數 |
+| `richtext.py` | 中 | ✅ | HTML 白名單清理、色彩 run 解析 |
+| `render/artifact_html.py` | 低 | ◐ | `runsToHtml` 搬好了；Jinja2 → **Nunjucks** 還沒接，`content/layouts/*.j2` 可以原封不動沿用 |
+| `storage.py` / `backup.py` | 中 | ⬜ | SQLite → Capacitor SQLite 或 IndexedDB。**歷史版本、垃圾桶那套邏輯要一起搬** |
+| `render/card_svg.py` + `textlayout.py` | **高** | ⬜ | 手算 SVG 排版 + 中英混排斷行（含避頭尾）。最花時間的一塊 |
+
+前三項在 [`core/`](../core/README.md)，**跟 Python 端逐案對照測過**：
+`core/test/tools/dump_parity.py` 把同一批輸入餵給 `backend/`，把答案錄下來，
+JavaScript 那邊再跑一次比對。改了 `backend/` 就重跑那支腳本，
+fixture 的 diff 會告訴你 `core/` 要不要跟。
 
 > **`content/` 已經先搬出後端了**（本來在 `app/seed/`）。
 > 那一層沒有一行 Python，將來任何客戶端都可以直接沿用同一批檔案——
@@ -82,7 +87,7 @@ run.sh     macOS / Linux  →  .venv/bin/python run.py
 
 ## 三、三條路線
 
-### 路線 A — PWA（先做這個）
+### 路線 A — PWA（進行中）
 
 把移植好的 JS 核心配上 service worker，使用者用瀏覽器開，按「加到主畫面」。
 
@@ -91,6 +96,21 @@ run.sh     macOS / Linux  →  .venv/bin/python run.py
 - **代價**：App Store / Google Play 搜不到（沒有商店曝光）；
   iOS 的 PWA 在長期不用時**有被系統清掉儲存空間的風險**——
   對日記 app 來說這件事要特別小心，一定要配合「匯出全部」提醒使用者備份
+
+已經做好的（**都還沒在真的手機上測過**）：
+
+| | 東西 | 在哪 |
+|---|---|---|
+| ✅ | 手機版介面：四個畫面 ＋ 底部分頁列 | [docs/mobile-ui.md](mobile-ui.md) |
+| ✅ | manifest、圖示、service worker | [platforms/pwa/](../platforms/pwa/README.md) |
+| ✅ | 輸出核心的前三塊 | [core/](../core/README.md) |
+| ⬜ | `card_svg.py` 移植（或改走 HTML→圖片） | — |
+| ⬜ | `storage.py` 移植 ← **沒有這個就沒有離線** | — |
+| ⬜ | Nunjucks 接上 `content/layouts/*.j2` | — |
+
+現在的 service worker 只快取介面，**刻意不碰 `/api/`**。
+日記顯示成昨天的答案，比明白地打不開更糟。
+真正的離線要等 `storage.py` 搬完。
 
 ### 路線 B — Capacitor 包成原生 app（A 做完再做）
 
@@ -119,7 +139,7 @@ run.sh     macOS / Linux  →  .venv/bin/python run.py
 ```
 C（桌機打包）                   ← ✅ 已完成
      ↓  先讓一般人用得到，收真實回饋
-A（移植核心到 JS + PWA）        ← 真正的工作量都在這裡
+A（移植核心到 JS + PWA）        ← 真正的工作量都在這裡。介面與前三塊核心已完成
      ↓  同一批人可以直接在手機上用
 B（Capacitor 上架）
 ```
@@ -128,7 +148,14 @@ B（Capacitor 上架）
 移植是幾個月的事，值得先用幾天的打包換到真實回饋。
 
 **所以現在的下一步不是寫程式，是把桌機版發出去看看反應。**
-在有人真的用之前，A 的幾個月投入沒有根據。
+在有人真的用之前，A 剩下的幾個月投入沒有根據。
+
+A 已經先做掉的兩塊，是因為它們**不必等回饋也不會白做**：
+手機版介面現在就能用（同一個 Wi-Fi 開電腦上的伺服器就好，
+見 [platforms/pwa/](../platforms/pwa/README.md)），
+而移植好的三塊核心有對照測試護著，桌機版怎麼演進它們都跟得上。
+還沒動的 `card_svg.py` 和 `storage.py` 才是「幾個月」的部分——
+那些值得等到確定有人在用再說。
 
 ---
 
@@ -150,10 +177,11 @@ B（Capacitor 上架）
 ```
 content/          共用：題組、版型          ← 誰都可以用
 backend/          Python 後端（桌機，用 content）
-web/              瀏覽器介面
-core/             共用：JS 輸出核心 ← 還沒有，路線 A 的產物
+web/              瀏覽器介面（桌機三欄／手機四個畫面，同一份）
+core/             共用：JS 輸出核心 ← 路線 A 的產物，做了三塊
 platforms/
   desktop/        PyInstaller 打包（Windows + macOS 共用）
+  pwa/            圖示產生器（manifest 與 sw 在 web/，因為要由伺服器送出）
   ios/            Xcode 產生的殼
   android/        Android Studio 產生的殼
 ```
@@ -250,8 +278,11 @@ platforms/
 
 ### 測試是目前最大的缺口
 
-專案目前**一個測試都沒有**，但 README 花了最長的篇幅在講「不會弄丟東西」。
-要推廣的話，這兩件事湊在一起是說服力上的弱點——
+`core/` 有測試了（`node --test`，247 個案例，其中大部分是跟 Python
+逐案對照的），但那護的是**移植沒有走鐘**，不是**資料不會弄丟**。
+
+`backend/` 目前仍然**一個測試都沒有**，而 README 花了最長的篇幅在講
+「不會弄丟東西」。要推廣的話，這兩件事湊在一起是說服力上的弱點——
 別人要把自己的日記交給這個程式，而唯一的保證是「相信我」。
 
 最值得先寫的幾個，都在 `storage.py`：

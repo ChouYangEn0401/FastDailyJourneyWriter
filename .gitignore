@@ -10,6 +10,8 @@
 *.png
 *.heic
 !docs/images/*.png
+# The app icon, drawn by platforms/pwa/make_icons.py from shapes in that file.
+!web/icon-*.png
 sample*.txt
 vv
 notes.private.*

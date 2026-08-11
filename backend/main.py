@@ -84,6 +84,26 @@ if WEB_DIR.exists():
     def index() -> FileResponse:
         return FileResponse(WEB_DIR / "index.html")
 
+    # Both of these have to answer from the site root, not from /static/.
+    # A service worker may only control paths at or below its own URL, and the
+    # manifest's scope has to cover the pages it claims — served under /static/
+    # they would only ever apply to /static/.
+    @app.get("/manifest.webmanifest", include_in_schema=False)
+    def manifest() -> FileResponse:
+        return FileResponse(
+            WEB_DIR / "manifest.webmanifest", media_type="application/manifest+json"
+        )
+
+    @app.get("/sw.js", include_in_schema=False)
+    def service_worker() -> FileResponse:
+        return FileResponse(
+            WEB_DIR / "sw.js",
+            media_type="text/javascript",
+            # The worker caches the interface, so a stale copy would pin people
+            # to an old build. Let the browser re-check it on every load.
+            headers={"Cache-Control": "no-cache", "Service-Worker-Allowed": "/"},
+        )
+
 
 def main() -> None:
     """Start the dev server. Lets you just press Run on this file."""

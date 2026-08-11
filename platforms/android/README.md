@@ -7,7 +7,18 @@
 跟 [iOS](../ios/README.md) 一樣：輸出核心現在是 Python，寫在 `backend/render/`，
 而 Python 上不了手機商店。要先有 `core/`（JavaScript 版的輸出核心）。
 
+[`core/`](../../core/README.md) 已經開始了，做了三塊；
+**還沒動的卡片排版和存檔才是關鍵**——存檔沒搬完就沒有離線。
+
 細節見 **[docs/roadmap.md](../../docs/roadmap.md)**。
+
+## 想先看看手機上長什麼樣
+
+不用等這個資料夾。介面已經為手機重新排過了
+（[docs/mobile-ui.md](../../docs/mobile-ui.md)），
+開著電腦上的伺服器，用手機的 Chrome 連過去就看得到，
+也可以直接「加到主畫面」——做法在 [platforms/pwa/](../pwa/README.md)。
+**那份介面目前還沒有在任何一支真的手機上開過。**
 
 ## 但 Android 值得先做
 

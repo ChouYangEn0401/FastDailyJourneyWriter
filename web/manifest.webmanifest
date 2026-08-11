@@ -1,0 +1,33 @@
+{
+  "name": "每日日記",
+  "short_name": "日記",
+  "description": "每天的日記：勾一勾、填一填，就能匯出好看的頁面與卡片。",
+  "lang": "zh-Hant",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f2efe9",
+  "theme_color": "#f2efe9",
+  "categories": ["lifestyle", "productivity"],
+  "icons": [
+    {
+      "src": "/static/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-180.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

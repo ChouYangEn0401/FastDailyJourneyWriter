@@ -403,3 +403,157 @@ input[type=color]{width:30px;height:26px;padding:0;border:1px solid var(--line);
 @media (prefers-reduced-motion: reduce){
   *{transition:none!important;}
 }
+
+/* ==========================================================================
+   Phone layout
+   --------------------------------------------------------------------------
+   Above 820px nothing below this line applies — the three-column desk layout
+   is untouched.
+
+   Below it, the single-column stack has a problem the grid rules alone cannot
+   fix: the pickers come *before* the editor in the document, so writing one
+   line means scrolling past four panels of settings first. The fix is to stop
+   showing everything at once. Each block carries a data-m-tab saying which of
+   the four phone screens it belongs to, and the bar at the bottom switches
+   between them. Nothing is moved in the DOM, so the desktop layout, the form
+   builder and collect() all keep working on the same elements.
+   ========================================================================== */
+
+.tabbar{display:none;}
+.mobile-only{display:none;}
+
+@media (max-width:820px){
+
+  /* ---- one screen at a time ---- */
+  .layout{
+    display:flex;flex-direction:column;gap:1rem;
+    /* The grid layout sets align-items:start, which in a column flex box means
+       "size each panel to its own content" — and the editor's content is wider
+       than a phone, so the whole page picked up a horizontal scroll. Every
+       panel is meant to be exactly as wide as the screen. */
+    align-items:stretch;
+    /* Room for the tab bar, plus the home indicator on a gesture-nav phone. */
+    padding-bottom:calc(4.75rem + env(safe-area-inset-bottom));
+  }
+  /* The rails stop being boxes and let their panels become layout children
+     directly, so a rail whose panels are all hidden leaves no phantom gap. */
+  .rail{display:contents;}
+
+  [data-m-tab]{display:none;}
+  body[data-view="write"]   [data-m-tab~="write"],
+  body[data-view="setup"]   [data-m-tab~="setup"],
+  body[data-view="output"]  [data-m-tab~="output"],
+  body[data-view="entries"] [data-m-tab~="entries"]{display:block;}
+
+  .mobile-only{display:block;}
+
+  /* ---- the bar ---- */
+  .tabbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;
+    background:color-mix(in srgb,var(--panel) 94%,transparent);
+    backdrop-filter:blur(10px);border-top:1px solid var(--line);
+    padding-bottom:env(safe-area-inset-bottom);
+    transition:transform .22s cubic-bezier(.2,.8,.2,1);
+  }
+  .tab{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:.1rem;
+    background:none;border:none;color:var(--muted);
+    padding:.4rem .2rem .45rem;font-size:.68rem;letter-spacing:.06em;
+    /* 48px of height even before the label, so the target is thumb-sized. */
+    min-height:48px;justify-content:center;
+  }
+  .tab-ico{font-size:1.15rem;line-height:1.15;}
+  .tab[aria-current="page"]{color:var(--accent);}
+  .tab[aria-current="page"] .tab-ico{transform:translateY(-1px);}
+
+  /* An on-screen keyboard already eats half the screen; the bar would eat more
+     of what is left, and you cannot switch screens mid-sentence anyway. */
+  body.typing .tabbar{transform:translateY(110%);}
+
+  /* ---- top bar: down to what still matters at 360px wide ---- */
+  .topbar{padding:.7rem .9rem;padding-top:calc(.7rem + env(safe-area-inset-top));}
+  .topbar-actions{flex-wrap:nowrap;gap:.4rem;}
+  /* Long enough to push the buttons off a narrow screen. It reappears in the
+     輸出 screen instead — see #ai-status-2. */
+  .brand small{display:none;}
+  .btn-label{display:none;}
+  .save-hint{font-size:.7rem;max-width:5.5rem;text-align:right;line-height:1.25;}
+  button.primary,button.ghost{padding:.5rem .85rem;}
+
+  /* 390px is the common phone width and has room for the name; below that the
+     buttons start to squeeze, and the mark alone carries the identity. */
+  @media (max-width:359px){
+    .brand strong{display:none;}
+  }
+
+  /* ---- iOS zooms the whole page when you focus a control under 16px ----
+     Every tap on a question would re-scale the layout and leave it zoomed. */
+  input:not([type=color]),select,textarea,[contenteditable="true"]{font-size:16px;}
+  .sub,.tpl-opt input{font-size:16px;}
+
+  /* ---- touch targets ----
+     Everything below was sized for a mouse pointer. 44px is the smallest
+     target most people can hit reliably with a thumb. */
+  .tpl{padding:.75rem .8rem;}
+  .tpl-edit{width:2.9rem;font-size:1rem;}
+  .ent{padding:.55rem .6rem;font-size:.9rem;}
+  .ent-del{padding:0 .8rem;font-size:.9rem;}
+  .opt-pill{padding:.5rem 1.05rem;font-size:.95rem;}
+  .thm{padding:.45rem .8rem .45rem .45rem;font-size:.85rem;}
+  .thm i{width:20px;height:20px;}
+  .list-row .del{padding:.5rem .6rem;font-size:.9rem;}
+  button.tiny{padding:.4rem .7rem;font-size:.8rem;}
+  .hist-actions button{padding:.4rem .7rem;}
+
+  /* ---- editor ---- */
+  .editor{padding:1rem .85rem 1.4rem;}
+  .editor-head{gap:.7rem;}
+  /* Its own full-width row, always. Sharing a line with the date leaves the
+     title about 150px on a small phone, and "AI 取名" then wraps one
+     character per line. */
+  .field-row.grow{flex:1 1 100%;min-width:0;}
+  .with-button{flex-wrap:wrap;}
+  .with-button input{min-width:0;flex:1 1 100%;}
+  .with-button button{flex:1;}
+
+  .palette-bar{
+    top:58px;gap:.4rem;padding:.5rem .6rem;
+    /* One scrollable row rather than three wrapped ones — the swatches are
+       the part you reach for, so they stay on screen. */
+    flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+  }
+  .palette-bar::-webkit-scrollbar{display:none;}
+  .palette-bar > *{flex:none;}
+  .palette-bar .hint,.pal-label{display:none;}
+  .swatches{gap:.45rem;}
+  .sw{width:32px;height:32px;}
+
+  /* ---- lists stop being little scroll boxes ----
+     A scroller inside a scroller is hard to work with on touch, and on their
+     own screens these have the whole page to grow into. */
+  .entry-list{max-height:none;overflow:visible;gap:.2rem;}
+  .card-preview{max-height:70dvh;}
+  .html-preview iframe{height:58dvh;}
+
+  /* ---- dialogs become bottom sheets ----
+     A centred box gets pushed around by the keyboard and leaves its close
+     button somewhere unpredictable. Anchored to the bottom edge it does not. */
+  .dialog,.dialog.wide-dialog{
+    position:fixed;inset:auto 0 0 0;margin:0;
+    width:100%;max-width:none;max-height:92dvh;overflow:auto;
+    border-radius:16px 16px 0 0;border-bottom:none;
+    padding:1.1rem 1rem calc(1.5rem + env(safe-area-inset-bottom));
+  }
+  /* Full-width break, so 刪除 keeps its own row instead of being squeezed in
+     next to the button you actually meant to press. */
+  .dlg-actions{flex-wrap:wrap;}
+  .dlg-actions .spacer{flex:0 0 100%;height:0;}
+  .dlg-actions button{flex:1;}
+  .tpl-field{grid-template-columns:1fr;}
+  .hist-row{flex-wrap:wrap;}
+  .hist-text{flex:1 1 100%;}
+
+  /* Clear of the tab bar, so a "已儲存" never lands under it. */
+  .toast{bottom:calc(4.9rem + env(safe-area-inset-bottom));}
+  body.typing .toast{bottom:1.5rem;}
+}
