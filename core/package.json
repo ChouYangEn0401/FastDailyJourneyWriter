@@ -1,0 +1,25 @@
+{
+  "name": "@fastdailyjourneywriter/core",
+  "version": "0.1.0",
+  "description": "Shared JavaScript output core — the same journal rendering the Python backend does, with no backend.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./richtext": "./richtext.js",
+    "./themes": "./themes.js",
+    "./document": "./document.js",
+    "./artifact_html": "./artifact_html.js"
+  },
+  "files": [
+    "*.js",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test test/"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

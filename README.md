@@ -39,15 +39,95 @@
 
 ## 安裝與啟動
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate          # Windows
+### 需要什麼
+
+| | |
+|---|---|
+| **Python** | **3.11 或更新的版本**（在 3.11 上開發與測試）。下載：[**Python 3.11**](https://www.python.org/downloads/release/python-3119/) ｜ [其他版本](https://www.python.org/downloads/) |
+| **其他** | 沒有了。不用 Node.js、不用資料庫、前端沒有 build 步驟。 |
+| **硬碟** | 大約 90 MB（含相依套件） |
+
+> **Windows 安裝 Python 時，記得勾選最下面的 `Add python.exe to PATH`。**
+> 沒勾的話下面的指令會說「找不到 python」。
+>
+> 已經裝好了？用 `python --version` 確認一下是不是 3.11 以上。
+> 如果電腦裡有好幾個版本，Windows 用 `py -3.11`、macOS／Linux 用 `python3.11` 指定。
+
+### Windows
+
+```powershell
+git clone https://github.com/ChouYangEn0401/FastDailyJourneyWriter.git
+cd FastDailyJourneyWriter
+
+py -3.11 -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
-python run.py                   # 或 python app/main.py
+
+python run.py
 ```
 
-打開 <http://127.0.0.1:8888>。（也可以 `uvicorn app.main:app --reload`。）
-環境變數：`JOURNAL_PORT`、`JOURNAL_HOST`、`JOURNAL_RELOAD=0`、`JOURNAL_DATA_DIR`。
+之後每次要開，按兩下 **`run.bat`** 就好（不用先 activate）。
+
+### macOS / Linux
+
+```bash
+git clone https://github.com/ChouYangEn0401/FastDailyJourneyWriter.git
+cd FastDailyJourneyWriter
+
+python3.11 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+
+python run.py
+```
+
+之後每次要開：**`./run.sh`**（第一次要先 `chmod +x run.sh`）。
+
+### 然後
+
+程式會自己開一個本機伺服器，打開瀏覽器到 **<http://127.0.0.1:8888>** 就可以寫了。
+第一次啟動時，內建的 19 個題組與 4 種版型會被複製到 `data/`。
+
+要停止：在終端機按 `Ctrl + C`。
+
+<details>
+<summary>可以調整的環境變數</summary>
+
+| 變數 | 預設 | 做什麼 |
+|---|---|---|
+| `JOURNAL_PORT` | `8888` | 換一個埠號（`8888` 被別的程式佔用時） |
+| `JOURNAL_HOST` | `127.0.0.1` | 設成 `0.0.0.0` 可以讓同一個 Wi-Fi 下的手機連進來 |
+| `JOURNAL_RELOAD` | `1` | 設成 `0` 關掉改檔自動重啟 |
+| `JOURNAL_DATA_DIR` | `data` | 把日記存到別的地方（例如雲端同步資料夾） |
+
+也可以用 `uvicorn backend.main:app --reload` 自己起。
+</details>
+
+### 想給沒裝 Python 的人用
+
+在專案根目錄執行 `build_desktop.bat`（Windows）或 `./build_desktop.sh`（macOS／Linux），
+會打包成一個約 32 MB 的資料夾，壓縮起來傳給人，對方解壓縮按兩下就能開。
+細節看 **[platforms/desktop/README.md](platforms/desktop/README.md)**。
+
+### 在手機上用
+
+還沒有上架的 app，但同一個 Wi-Fi 就能用：
+
+```bash
+JOURNAL_HOST=0.0.0.0 python run.py     # Windows: set JOURNAL_HOST=0.0.0.0
+```
+
+然後用手機的瀏覽器打 `http://<電腦的區網 IP>:8888`。
+
+介面在手機上會換一種排法——**底部四個分頁：寫、題組、輸出、日記**，
+一次專心一件事，打開就在寫字的那一頁。為什麼這樣排寫在
+**[docs/mobile-ui.md](docs/mobile-ui.md)**。
+
+> **這份手機介面還沒有在真的手機上開過**，只在瀏覽器的模擬寬度下看過版面。
+> 有東西壞掉的話，開一個 issue 會很有幫助。
+
+真正的手機 app 還要等輸出核心搬完，路線在
+**[docs/roadmap.md](docs/roadmap.md)**。
 
 ---
 
@@ -218,8 +298,9 @@ data/
 ### 自己做一個題組
 
 一個題組就是一個 JSON 檔。最短的可用範例、七種題目型態、每個鍵的意思，
-還有內建那 17 個是照什麼原則寫的，都在 **[docs/templates.md](docs/templates.md)**。
-做了好用的題組，歡迎開 PR 放進 `app/seed/templates/`。
+還有內建那 19 個是照什麼原則寫的，都在 **[docs/templates.md](docs/templates.md)**。
+做了好用的題組，歡迎開 PR 放進 `content/templates/`——
+怎麼開 PR 看 **[CONTRIBUTING.md](CONTRIBUTING.md)**。
 
 ### 自己做一個版型
 
@@ -248,25 +329,31 @@ data/
 - 日記、匯出檔、備份、你改過的題組與版型都在 `data/`，已被 `.gitignore` 擋掉。
 - `.gitignore` 也擋掉所有 `*.png` / `*.jpg`，避免不小心把真實日記的截圖 commit 進來。
   唯一的例外是 `docs/images/`，那裡的圖片全部是編出來的範例（見該資料夾的 README）。
-- `app/seed/` 裡的預設題組只有題目結構、選項與段落顏色，沒有任何人的答案。
+- `content/` 裡的預設題組只有題目結構、選項與段落顏色，沒有任何人的答案。
 
 ---
 
 ## 專案結構
 
+分成六層，**由上而下越來越跟平台有關**。這樣分是為了讓最有價值的東西
+（題目怎麼問、版面長什麼樣）不綁在 Python 上，也不綁在任何一個作業系統上。
+
 ```
-run.py                   啟動
-app/
-  main.py                FastAPI；也可以直接 python app/main.py
+content/                 ── 產品內容。純資料，沒有一行 Python
+  templates/*.json         19 個內建題組
+  layouts/<id>.html.j2     4 種版型（Jinja2）＋ 共用的封面、色彩 token
+  layouts/<id>.json        版型的名字、說明、標籤
+
+backend/                 ── 後端（Python）。四種平台共用同一份
+  main.py                FastAPI；也可以直接 python backend/main.py
   models.py              題組 / 版型 / 日記 / 偏好的 schema
   storage.py             SQLite、歷史版本、垃圾桶、防覆蓋
   backup.py              資料庫快照、匯出匯入
   preferences.py         顏色與慣用設定
-  seed_manager.py        第一次啟動把預設複製到 data/
+  seed_manager.py        第一次啟動把 content/ 複製到 data/
   template_registry.py   讀 data/templates/
   richtext.py            HTML 白名單清理、色彩 run 解析
   services.py            答案清理、載入、題組刪除後的救援視圖
-  seed/                  出廠預設（題組 JSON、版型 j2）
   render/
     document.py          Entry + Template -> 兩個 renderer 共用的結構
     layout_registry.py   讀 data/layouts/
@@ -276,10 +363,55 @@ app/
     themes.py            五組紙張顏色
   ai/                    選配：版型設計、標題、繪圖 prompt
   routers/               FastAPI 路由
-web/                     前端（原生 JS，不需要 build）
-docs/templates.md        內建題組一覽 ＋ 自己寫題組的說明書
-docs/images/             README 用的截圖（虛構內容）
-IDEAS.md                 討論過但還沒做的想法
+
+web/                     ── 前端（原生 JS，不需要 build）
+                            桌機三欄、手機四個分頁，同一份檔案
+
+core/                    ── 輸出核心的 JavaScript 版。手機版用得到的那份
+  richtext.js              backend/richtext.py 的移植
+  themes.js                backend/render/themes.py 的移植
+  document.js              backend/render/document.py 的移植
+  test/                    跟 Python 逐案對照的測試（node --test，零相依）
+
+platforms/               ── 只放「怎麼包成給人用的東西」，不放任何邏輯
+  desktop/                 Windows 與 macOS 桌機版打包（共用同一份設定）
+  pwa/                     圖示產生器（加到手機主畫面用）
+  ios/                     iPhone / iPad（規劃中）
+  android/                 Android（規劃中）
+
+data/                    ── 你的東西。gitignore，永遠不進 repo
+```
+
+**上面三層（`content/`、`backend/`、`web/`）不知道自己跑在哪個作業系統上。**
+所有平台差異都關在 `platforms/` 裡面。這條界線是刻意的：
+`backend/` 裡沒有任何一行 `sys.platform`，所以 Windows 和 macOS 跑的是同一份程式碼，
+不需要、也不應該有兩份副本。
+
+`content/` 又再放在 `backend/` 外面，因為那裡面沒有任何東西跟 Python 有關——
+別的客戶端（手機版、純瀏覽器版）可以直接沿用同一批檔案。
+`core/` 就是第一個這樣的客戶端：它不知道 FastAPI 或 SQLite 存在，
+輸入是普通物件，輸出是字串。
+啟動時 `seed_manager.py` 把它複製一份到 `data/`，從此你改的是 `data/` 那份，
+升級程式不會蓋掉你的修改。
+
+各層的規矩寫在 **[platforms/README.md](platforms/README.md)**。
+
+其他檔案：
+
+```
+run.bat / run.sh            開發時啟動（bat 給 Windows，sh 給 macOS/Linux）
+build_desktop.bat / .sh     打包成 .exe / .app
+run.py                      實際的進入點，上面四個都是叫它
+requirements.txt            執行需要的套件
+requirements-dev.txt        打包、測試才需要的套件
+pyproject.toml              專案資訊、Python 版本下限、ruff 設定
+LICENSE                     AGPL-3.0
+CONTRIBUTING.md             想幫忙的話從這裡開始
+IDEAS.md                    討論過但還沒做的想法
+docs/templates.md           內建題組一覽 ＋ 自己寫題組的說明書
+docs/roadmap.md             接下來的方向（含手機版怎麼走）
+docs/mobile-ui.md           手機版介面：為什麼分成四個畫面，踩到哪些坑
+docs/images/                README 用的截圖（虛構內容）
 ```
 
 ## API
@@ -313,3 +445,19 @@ POST   /api/export/html            產生頁面
 POST   /api/export/card            產生卡片 SVG
 POST   /api/ai/image-prompt        繪圖 prompt（沒 key 有 fallback）
 ```
+
+---
+
+## 授權
+
+**[GNU AGPL-3.0](LICENSE)**。白話說：
+
+- **自己用，完全自由**，永遠免費。個人、教會、小組、公司內部都一樣，不用問、不用付錢。
+- **可以改、可以散布**——但如果你把改過的版本給別人用，或架成網路服務讓別人連，
+  你也要把你改過的原始碼一起公開。
+- 想在**閉源**的產品裡使用，請來信談授權。
+
+## 想幫忙？
+
+最歡迎的貢獻是**新的題組**——一個 JSON 檔而已，
+看 [docs/templates.md](docs/templates.md) 和 [CONTRIBUTING.md](CONTRIBUTING.md)。

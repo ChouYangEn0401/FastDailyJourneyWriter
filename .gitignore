@@ -10,6 +10,8 @@
 *.png
 *.heic
 !docs/images/*.png
+# The app icon, drawn by platforms/pwa/make_icons.py from shapes in that file.
+!web/icon-*.png
 sample*.txt
 vv
 notes.private.*
@@ -36,3 +38,21 @@ __pycache__/
 .idea/
 .DS_Store
 Thumbs.db
+
+# Build output: PyInstaller writes build/ and dist/ in the project root.
+build/
+dist/
+
+# Native IDE output, if an iOS/Android shell is ever added. Xcode and Android
+# Studio both generate large machine-specific trees next to their project
+# files. Signing keys must never be committed.
+node_modules/
+DerivedData/
+xcuserdata/
+*.xcuserstate
+local.properties
+.gradle/
+*.apk
+*.aab
+*.keystore
+*.jks

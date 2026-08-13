@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fast-daily-journey-writer"
+version = "0.1.0"
+description = "挑一個題組、多半用勾的就寫完一篇日記，並輸出成一頁 HTML 或一張日記本卡片。"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "AGPL-3.0-or-later"
+license-files = ["LICENSE"]
+
+dependencies = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.32",
+    "pydantic>=2.9",
+    "jinja2>=3.1",
+    "anthropic>=0.69",
+    "python-dotenv>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/ChouYangEn0401/FastDailyJourneyWriter"
+
+# The app is run from a checkout (``python run.py``), not installed. Listing the
+# package explicitly keeps setuptools from trying to auto-discover one from the
+# flat layout, where ``web/``, ``content/`` and ``docs/`` are not packages.
+[tool.setuptools]
+packages = ["backend", "backend.ai", "backend.render", "backend.routers"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
