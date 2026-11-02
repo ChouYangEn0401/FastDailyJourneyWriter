@@ -4,7 +4,15 @@
   "description": "把一天在主面前重看一遍：謝恩、求光照、看見、認罪、交給明天。",
   "group": "與神同行",
   "order": 5,
+  "when": "睡前，想把一天在主面前重看一遍的時候。",
+  "minutes": 10,
+  "moods": ["平靜", "心有點亂", "想沉澱"],
+  "tags": ["靈修", "省察", "認罪", "感恩", "睡前"],
   "default_theme": "dawn",
+  "default_layout": "letter",
+  "closing_label": "給主的話",
+  "closing_hint": "今天想對主說的一段話。也可以換色。",
+  "closing_placeholder": "親愛的主耶穌，今天…",
   "sections": [
     {
       "id": "still",
@@ -21,7 +29,8 @@
             { "id": "restless", "label": "有點浮動" },
             { "id": "noisy", "label": "很亂" }
           ],
-          "hint": "不用先整理好才來"
+          "hint": "不用先整理好才來",
+          "ai_hint": "作者描述了此刻的心（安靜／浮動／很亂）才選。"
         },
         {
           "id": "given",
@@ -29,7 +38,8 @@
           "kind": "list",
           "placeholder": "謝謝主…",
           "min_rows": 3,
-          "color": "#1f7a4d"
+          "color": "#1f7a4d",
+          "ai_hint": "今天白白得來的恩典，一件一行。"
         }
       ]
     },
@@ -43,7 +53,8 @@
           "id": "ask_light",
           "label": "求主的眼光",
           "kind": "fill",
-          "pattern": "主啊，求祢讓我用祢的眼睛，重看今天 {} 的那一段。"
+          "pattern": "主啊，求祢讓我用祢的眼睛，重看今天 {} 的那一段。",
+          "ai_hint": "一格：作者想在主面前重看的那一段（例：跟同事爭執）；沒有就留空。"
         }
       ]
     },
@@ -56,19 +67,25 @@
         {
           "id": "alive",
           "label": "哪一刻我最有生命力、最感到被愛？",
+          "kind": "text",
           "placeholder": "今天…",
-          "hint": "很小的一刻也算"
+          "hint": "很小的一刻也算",
+          "ai_hint": "作者最有生命力、覺得被愛的一刻。"
         },
         {
           "id": "dry",
           "label": "哪一刻我最枯乾、最想逃？",
-          "placeholder": "今天…"
+          "kind": "text",
+          "placeholder": "今天…",
+          "ai_hint": "作者最枯乾、最想逃的一刻。"
         },
         {
           "id": "where_god",
           "label": "回頭看，主當時在哪裡？",
+          "kind": "text",
           "color": "#2456b8",
-          "hint": "當下常常看不見，回頭看才看得見"
+          "hint": "當下常常看不見，回頭看才看得見",
+          "ai_hint": "作者回頭看見主在哪裡；作者沒說就留空，不要替作者回答。"
         }
       ]
     },
@@ -81,12 +98,15 @@
         {
           "id": "sorry",
           "label": "今天想向主說對不起的事",
-          "placeholder": "主啊，我…"
+          "kind": "text",
+          "placeholder": "主啊，我…",
+          "ai_hint": "作者自己說想向主認的錯；不要替作者認罪。"
         },
         {
           "id": "hurt_someone",
           "label": "有沒有誰因為我今天的話或行為受了傷？",
-          "kind": "short_text"
+          "kind": "short_text",
+          "ai_hint": "作者提到可能因作者受傷的人與事；沒提到就留空。"
         },
         {
           "id": "received",
@@ -97,7 +117,8 @@
             { "id": "half", "label": "半信半疑" },
             { "id": "no", "label": "還放不下" }
           ],
-          "hint": "赦免是主給的，不是我掙來的"
+          "hint": "赦免是主給的，不是我掙來的",
+          "ai_hint": "作者表達了對赦免的感受才選。"
         }
       ]
     },
@@ -110,13 +131,15 @@
         {
           "id": "one_thing",
           "label": "明天最想和主一起做好的一件事",
-          "kind": "short_text"
+          "kind": "short_text",
+          "ai_hint": "明天最想和主一起做好的一件事。"
         },
         {
           "id": "ask_for",
           "label": "明天的祈求",
           "kind": "fill",
-          "pattern": "主啊，明天求祢給我 {} ，讓我能 {} 。"
+          "pattern": "主啊，明天求祢給我 {} ，讓我能 {} 。",
+          "ai_hint": "兩格：求主給作者什麼、讓作者能做什麼。"
         }
       ]
     }

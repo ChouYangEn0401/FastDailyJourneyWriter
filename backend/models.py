@@ -49,6 +49,11 @@ class TemplateField(BaseModel):
     #: Suggested colour for answers to this field (hex). The user can override.
     color: str | None = None
     hint: str | None = None
+    #: How an assistant should fill this question from free-form writing:
+    #: what to pull out, and when to leave it blank. Never shown in the
+    #: editor or the export — it is for whoever fills the set on your behalf
+    #: (see ``skills/diary-templates/SKILL.md``).
+    ai_hint: str | None = None
 
 
 class TemplateSection(BaseModel):
@@ -72,6 +77,16 @@ class JournalTemplate(BaseModel):
     group: str = ""
     #: Position in the list. Lower comes first; ties break on file name.
     order: int = 1000
+    #: The situation this set is for, in one sentence ("很忙、但不想斷掉的日子").
+    #: ``description`` is the short line under the name; this is what someone
+    #: (or an assistant) reads when deciding *which* set to open today.
+    when: str = ""
+    #: Roughly how many minutes one honest pass takes. ``0`` = not stated.
+    minutes: int = 0
+    #: Moods or states this set fits ("疲累", "焦慮", "平靜"…). Free words.
+    moods: list[str] = Field(default_factory=list)
+    #: Short labels for filtering ("靈修", "勾選為主", "經文", "工作"…).
+    tags: list[str] = Field(default_factory=list)
     #: What the free-text block at the end of the entry is called. The
     #: devotional sets keep "給主的話"; the rest name it something that fits.
     closing_label: str = "給主的話"

@@ -243,6 +243,32 @@ def count_entries_on(entry_date: date) -> int:
     return int(row["n"])
 
 
+def list_entries_on(entry_date: date) -> list[Entry]:
+    """Every entry written for one day, oldest first."""
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT * FROM entries WHERE entry_date = ? ORDER BY id",
+            (entry_date.isoformat(),),
+        ).fetchall()
+    return [_row_to_entry(r) for r in rows]
+
+
+def get_entry_for(entry_date: date, template_id: str) -> Entry | None:
+    """The day's entry written with one question set (the most recent one).
+
+    The command line writes "that day, that set" rather than "that day": a day
+    can hold a Telegram jot and a 反思膠囊 side by side, and adding to one must
+    never switch the other to a different question set.
+    """
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT * FROM entries WHERE entry_date = ? AND template_id = ? "
+            "ORDER BY updated_at DESC, id DESC LIMIT 1",
+            (entry_date.isoformat(), template_id),
+        ).fetchone()
+    return _row_to_entry(row) if row else None
+
+
 def list_entries(limit: int = 100, offset: int = 0) -> list[Entry]:
     with _connect() as conn:
         rows = conn.execute(

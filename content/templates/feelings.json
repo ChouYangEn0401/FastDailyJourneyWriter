@@ -4,6 +4,10 @@
   "description": "五分鐘，把說不出來的心情找到名字。多半是勾的。",
   "group": "心情與難處",
   "order": 11,
+  "when": "說不出現在是什麼心情，想先替情緒找到名字。",
+  "minutes": 5,
+  "moods": ["說不上來", "煩躁", "麻木", "混亂"],
+  "tags": ["情緒", "勾選為主", "自我照顧", "不談信仰也可以"],
   "default_theme": "dawn",
   "default_layout": "ledger",
   "closing_label": "寫給自己的話",
@@ -41,14 +45,16 @@
             { "id": "numb", "label": "麻木" },
             { "id": "excited", "label": "興奮" },
             { "id": "nervous", "label": "緊張" }
-          ]
+          ],
+          "ai_hint": "從選項挑最接近作者描述的（最多四個）。"
         },
         {
           "id": "precise",
           "label": "如果只能用一個更準的詞，是哪個？",
           "kind": "short_text",
           "color": "#6b4c9a",
-          "hint": "叫得越準，越好照顧"
+          "hint": "叫得越準，越好照顧",
+          "ai_hint": "一個更準的情緒詞，最好是作者自己的字。"
         },
         {
           "id": "level",
@@ -58,7 +64,8 @@
             { "id": "high", "label": "很強" },
             { "id": "mid", "label": "中等" },
             { "id": "low", "label": "淡淡的" }
-          ]
+          ],
+          "ai_hint": "只在作者自己說了才選；沒提到就不選，不要替作者打分數。"
         }
       ]
     },
@@ -71,7 +78,8 @@
         {
           "id": "trigger",
           "label": "是什麼事之後開始的？",
-          "kind": "short_text"
+          "kind": "short_text",
+          "ai_hint": "是什麼事之後開始的，一句話。"
         },
         {
           "id": "familiar",
@@ -81,13 +89,15 @@
             { "id": "often", "label": "常常" },
             { "id": "sometimes", "label": "偶爾" },
             { "id": "first", "label": "第一次" }
-          ]
+          ],
+          "ai_hint": "作者說了以前有沒有出現過才選。"
         },
         {
           "id": "says",
           "label": "它想告訴我什麼",
           "kind": "fill",
-          "pattern": "這個情緒好像在說：我很在意 {} ，也很怕 {} 。"
+          "pattern": "這個情緒好像在說：我很在意 {} ，也很怕 {} 。",
+          "ai_hint": "兩格：這個情緒在說作者很在意什麼、很怕什麼。"
         }
       ]
     },
@@ -112,13 +122,15 @@
             { "id": "eat", "label": "先吃飯" },
             { "id": "small", "label": "做完一件小事" },
             { "id": "cry", "label": "哭一場" }
-          ]
+          ],
+          "ai_hint": "從選項挑作者說以前有用的做法。"
         },
         {
           "id": "today",
           "label": "今天要試哪一個？",
           "kind": "short_text",
-          "color": "#1f7a4d"
+          "color": "#1f7a4d",
+          "ai_hint": "今天要試的那一個。"
         }
       ]
     }
