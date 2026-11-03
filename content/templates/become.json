@@ -4,7 +4,12 @@
   "description": "先寫下想長成的樣子，再看今天哪一刻像、哪一刻不像。每天一點點。",
   "group": "成為什麼樣的人",
   "order": 20,
+  "when": "想看看今天的自己，離想成為的那個人近了還是遠了。",
+  "minutes": 10,
+  "moods": ["平靜", "想成長", "想調整"],
+  "tags": ["品格", "成長", "反思"],
   "default_theme": "linen",
+  "default_layout": "letter",
   "closing_label": "寫給未來的自己",
   "closing_hint": "寫給一年後讀到這一頁的你。",
   "closing_placeholder": "等你讀到這一段的時候，希望你已經…",
@@ -20,7 +25,8 @@
           "label": "我心裡有沒有一個這樣的人？",
           "kind": "short_text",
           "placeholder": "他叫什麼名字",
-          "hint": "身邊的人、書裡的人、聖經裡的人都可以"
+          "hint": "身邊的人、書裡的人、聖經裡的人都可以",
+          "ai_hint": "作者心裡那個榜樣（人或描述）；沒提到就留空。"
         },
         {
           "id": "quality",
@@ -43,14 +49,16 @@
             { "id": "admit", "label": "敢認錯" },
             { "id": "curious", "label": "對人好奇" },
             { "id": "hopeful", "label": "有盼望" }
-          ]
+          ],
+          "ai_hint": "從選項挑作者說想長成的樣子（兩三個）。"
         },
         {
           "id": "sentence",
           "label": "一句話說清楚",
           "kind": "fill",
           "pattern": "我想成為一個 {} 的人，因為 {} 。",
-          "hint": "這一句可以每天照抄，不用每天想新的"
+          "hint": "這一句可以每天照抄，不用每天想新的",
+          "ai_hint": "兩格：想成為怎樣的人、為什麼。"
         }
       ]
     },
@@ -63,20 +71,25 @@
         {
           "id": "like",
           "label": "今天哪一刻，我像那個人？",
+          "kind": "text",
           "color": "#1f7a4d",
-          "hint": "再小都算，一句話、一個忍住"
+          "hint": "再小都算，一句話、一個忍住",
+          "ai_hint": "今天像那個人的一刻。"
         },
         {
           "id": "unlike",
           "label": "今天哪一刻，我離他最遠？",
+          "kind": "text",
           "color": "#2456b8",
-          "hint": "看清楚就好，不用罵自己"
+          "hint": "看清楚就好，不用罵自己",
+          "ai_hint": "今天離那個人最遠的一刻；照實寫，不加評語。"
         },
         {
           "id": "cost",
           "label": "當時如果要做對的選擇，我要付出什麼？",
           "kind": "short_text",
-          "hint": "多半是面子、時間，或一句不好說的話"
+          "hint": "多半是面子、時間，或一句不好說的話",
+          "ai_hint": "當時要做對的選擇得付出什麼。"
         }
       ]
     },
@@ -91,12 +104,14 @@
           "label": "明天可以練習的一件具體小事",
           "kind": "short_text",
           "color": "#1f7a4d",
-          "hint": "具體到明天一看就知道要做什麼"
+          "hint": "具體到明天一看就知道要做什麼",
+          "ai_hint": "明天可以練習的一件具體小事。"
         },
         {
           "id": "who",
           "label": "誰會因為我變成這樣，日子好過一點？",
-          "kind": "short_text"
+          "kind": "short_text",
+          "ai_hint": "誰會因此好過一點。"
         },
         {
           "id": "howlong",
@@ -106,7 +121,8 @@
             { "id": "tomorrow", "label": "明天" },
             { "id": "week", "label": "這一週" },
             { "id": "month", "label": "這個月" }
-          ]
+          ],
+          "ai_hint": "作者說了打算練多久才選。"
         }
       ]
     }

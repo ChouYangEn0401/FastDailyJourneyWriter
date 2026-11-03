@@ -54,13 +54,30 @@ JOURNAL_DATA_DIR=/tmp/journal-dev python run.py
 
 ## 測試
 
-目前只有 [`core/`](core/README.md) 有測試。要跑的話需要 Node 18 以上，
-不需要 `npm install`（零相依，用 Node 內建的 test runner）：
+兩組，都不用多裝任何東西。
+
+**題組與命令列**（Python，標準函式庫的 unittest；每一個測試都用暫存資料夾，碰不到你自己的 `data/`）：
+
+```bash
+python -m unittest discover -s tests
+```
+
+它會檢查每個內建題組的鍵都齊（`when`／`minutes`／`moods`／`tags`、每一題的 `ai_hint`）、
+`docs/templates.md` 與 `skills/diary-templates/SKILL.md` 有列到每一個題組、
+`content/superseded.json` 的指紋格式對，以及命令列的寫入、讀出、匯出。
+
+**輸出核心**（[`core/`](core/README.md)，Node 18 以上，不需要 `npm install`——零相依，用 Node 內建的 test runner）：
 
 ```bash
 cd core
 node --test "test/*.test.js"
 ```
+
+### 改了 `content/templates/` 的話
+
+把**改之前那一版**的指紋加進 `content/superseded.json`（那個檔案開頭有一行指令可以算）。
+這樣大家 `data/` 裡沒改過的那一份，下次啟動會自動換成新版；改過的不會被碰。
+新增題組的話，`docs/templates.md` 的表與 `skills/diary-templates/SKILL.md` 也要加一行（測試會抓）。
 
 ### 改了 `backend/richtext.py` 或 `backend/render/` 的話
 

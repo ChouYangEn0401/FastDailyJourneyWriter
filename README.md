@@ -23,7 +23,7 @@
 
 題目都是往同一個方向問的：看清楚今天發生了什麼、對自己誠實、然後找出下一步。
 
-**內建 19 個題組，分五類**：與神同行（靈修）、心情與難處、成為什麼樣的人、
+**內建 20 個題組，分五類**：與神同行（靈修）、心情與難處、成為什麼樣的人、
 工作與創業、簡單記一下。每一個在做什麼，看
 **[docs/templates.md](docs/templates.md)**。全部可以改，也可以刪。
 
@@ -86,7 +86,7 @@ python run.py
 ### 然後
 
 程式會自己開一個本機伺服器，打開瀏覽器到 **<http://127.0.0.1:8888>** 就可以寫了。
-第一次啟動時，內建的 19 個題組與 4 種版型會被複製到 `data/`。
+第一次啟動時，內建的 20 個題組與 4 種版型會被複製到 `data/`。
 
 要停止：在終端機按 `Ctrl + C`。
 
@@ -175,7 +175,7 @@ JOURNAL_HOST=0.0.0.0 python run.py     # Windows: set JOURNAL_HOST=0.0.0.0
 
 ---
 
-## 題組：內建 19 個，也可以自己改
+## 題組：內建 20 個，也可以自己改
 
 側欄的題組按分類排好。點名字換題組，點右邊的鉛筆直接改，「＋ 新增」從空白開一個。
 
@@ -187,7 +187,7 @@ JOURNAL_HOST=0.0.0.0 python run.py     # Windows: set JOURNAL_HOST=0.0.0.0
 | **心情與難處** | 難熬的一天、情緒盤點、擔心的事分一分 |
 | **成為什麼樣的人** | 我想成為什麼樣的人、高峰與低谷、反思膠囊、月回顧（這個月我變成了誰） |
 | **工作與創業** | 創業日記（每天）、決策紀錄、週回顧 |
-| **簡單記一下** | 三行日記、感恩清單 |
+| **簡單記一下** | 隨手記（一則一則）、三行日記、感恩清單 |
 
 兩個核心的長版練習：
 
@@ -298,7 +298,7 @@ data/
 ### 自己做一個題組
 
 一個題組就是一個 JSON 檔。最短的可用範例、七種題目型態、每個鍵的意思，
-還有內建那 19 個是照什麼原則寫的，都在 **[docs/templates.md](docs/templates.md)**。
+還有內建那 20 個是照什麼原則寫的，都在 **[docs/templates.md](docs/templates.md)**。
 做了好用的題組，歡迎開 PR 放進 `content/templates/`——
 怎麼開 PR 看 **[CONTRIBUTING.md](CONTRIBUTING.md)**。
 
@@ -340,7 +340,7 @@ data/
 
 ```
 content/                 ── 產品內容。純資料，沒有一行 Python
-  templates/*.json         19 個內建題組
+  templates/*.json         20 個內建題組
   layouts/<id>.html.j2     4 種版型（Jinja2）＋ 共用的封面、色彩 token
   layouts/<id>.json        版型的名字、說明、標籤
 
@@ -361,6 +361,7 @@ backend/                 ── 後端（Python）。四種平台共用同一份
     card_svg.py          -> 筆記本卡片 SVG
     textlayout.py        中英混排斷行（含避頭尾）
     themes.py            五組紙張顏色
+  cli.py                 命令列：不開伺服器也能列題組、寫入、讀出、匯出（python -m backend.cli）
   ai/                    選配：版型設計、標題、繪圖 prompt
   routers/               FastAPI 路由
 
@@ -409,10 +410,28 @@ LICENSE                     AGPL-3.0
 CONTRIBUTING.md             想幫忙的話從這裡開始
 IDEAS.md                    討論過但還沒做的想法
 docs/templates.md           內建題組一覽 ＋ 自己寫題組的說明書
+docs/cli.md                 命令列的完整參考（給腳本、AI 助理、ClawBot）
+skills/diary-templates/     給 AI 讀的說明：有哪些題組、什麼情況選哪個、每一題怎麼填、怎麼匯出
+content/superseded.json     內建題組舊版本的指紋：沒改過的 data/ 副本會自動換成新版
+tests/                      命令列與題組的測試（python -m unittest，零相依）
 docs/roadmap.md             接下來的方向（含手機版怎麼走）
 docs/mobile-ui.md           手機版介面：為什麼分成四個畫面，踩到哪些坑
 docs/images/                README 用的截圖（虛構內容）
 ```
+
+## 命令列（不用開伺服器）
+
+給腳本、排程、或 AI 助理用：列題組、寫一篇、讀一篇、匯出成 HTML／卡片。讀寫的是跟編輯器同一份日記，
+寫壞了一樣在「歷史」救得回來。
+
+```bash
+python -m backend.cli templates --brief                      # 有哪些題組
+python -m backend.cli entry show --date=2026-11-02            # 那一天寫了什麼
+python -m backend.cli entry put -h                            # 每個指令加 -h：說明＋例子
+```
+
+**完整參考在 [docs/cli.md](docs/cli.md)**（每個指令與參數、`--json` 信封、結束碼、`--data-dir`、內容怎麼餵、隱私）；
+AI 怎麼選題組、怎麼填，寫在 [skills/diary-templates/SKILL.md](skills/diary-templates/SKILL.md)。
 
 ## API
 

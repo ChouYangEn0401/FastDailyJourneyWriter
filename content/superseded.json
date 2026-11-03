@@ -1,0 +1,66 @@
+{
+  "_doc": [
+    "Fingerprints (sha256, line endings normalised to LF) of every earlier shipped version of a default.",
+    "A copy in data/ that still matches one of these was never edited, so it is replaced by the current",
+    "shipped version on the next start (backend/seed_manager.py, upgrade_untouched). Edited copies are never touched.",
+    "When you change a file under content/, add the fingerprint of the version you are replacing:",
+    "    python -c \"from pathlib import Path; from backend.seed_manager import fingerprint; print(fingerprint(Path('content/templates/<file>')))\""
+  ],
+  "templates/become.json": [
+    "21f664a9eb966ef1ef6e6baecb6d71f8491568f28e53be9dba0d696d744684fc"
+  ],
+  "templates/capsule.json": [
+    "87ecfa89e53353799688bbb537ce5317be16abe7589acac0b350e5f7f44157b9"
+  ],
+  "templates/decision-log.json": [
+    "8eea935d4e8a9e3b2c1f4fcc22de51e681a61921c09c6289a1e901fb76c16a57"
+  ],
+  "templates/examen.json": [
+    "b9bd992c58cce65c8649d8b860bd7779d19ba8f3a8d367ece37a631a078f30a8"
+  ],
+  "templates/feelings.json": [
+    "7ff7fc0a8bc52a824bc73e197b669f35a70ced78a58983ac61a07e389783b3dc"
+  ],
+  "templates/founder-daily.json": [
+    "4a8b2be5f1410adf89edfcc35d64448132c99182dc0ab5314a6a6d5ac81da54e"
+  ],
+  "templates/free-bullets.json": [
+    "353c2fdc050d442461796f718076a2043df881a498048d47eee218e4b8a47d9c"
+  ],
+  "templates/gratitude.json": [
+    "c037d698c9e313a5972dde2d0c945fabdaf21d99e47837912c936e7203401402"
+  ],
+  "templates/hard-day.json": [
+    "c96c9ec09596144fe183f417288c2d00b70caaa5ae484c98a5fc6fcf911444d5"
+  ],
+  "templates/lament.json": [
+    "5f2f9609986186c266555e9409a9691ef78bddb5bd25844740867ea11aa62030"
+  ],
+  "templates/month-review.json": [
+    "2d77f34e27587cc2b5a5944b4552910d930ef9bf959b3fa44f8bd317a0d05154"
+  ],
+  "templates/peaks-valleys.json": [
+    "3c0f44383db7906c26c020126d1bb871e52f8e340f401a59035513b0abf51f4d"
+  ],
+  "templates/quick-checkin.json": [
+    "f45d2939ef684fa3a5b72dafacbcea8092201954991623fe482c8a75dc5b1f0d"
+  ],
+  "templates/scripture-fill.json": [
+    "7983964a6d808e6a28b7dd4a49793d835afdc432a49bab7d0b9dc7a227baa8de"
+  ],
+  "templates/three-lines.json": [
+    "0fb8ef2a5dc3e64c373a7ed274e9a0b686df6e3508e9d59b985c1bc2d5e13875"
+  ],
+  "templates/three-part.json": [
+    "c7d751b82b4c9811051113e996353f1d3d5e08bcaa04f08d3ebc1652b4780d86"
+  ],
+  "templates/walk-with-jesus.json": [
+    "3f488027fd80e95418cfe49ac90ac30c899c8289898ebc351e1305e2c0ad8518"
+  ],
+  "templates/week-review.json": [
+    "fec1b551f41a7506d55a00915acf45803c15b2bed1afe68f900da5103018655f"
+  ],
+  "templates/worry-sort.json": [
+    "a9989422596690f3b6334ebb70edd2e2e48c8ed9cac76ba83cf97f5c0193e16f"
+  ]
+}
