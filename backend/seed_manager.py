@@ -12,7 +12,11 @@ default sticks — it will not silently come back on the next boot.
 When a shipped default is improved, copies nobody has touched are brought up
 to date (:func:`upgrade_untouched`): ``content/superseded.json`` lists the
 fingerprints of every earlier shipped version, and a data copy that still
-matches one of them was never edited. An edited copy is never replaced.
+matches one of them was never edited. An edited copy is never replaced, a
+deleted one never comes back, and before anything is replaced the database is
+snapshotted and the old copies are kept under ``backups/`` (no backup, no
+upgrade). Journal entries are never touched here: they live in the database,
+the defaults are files next to it.
 """
 
 from __future__ import annotations
@@ -112,9 +116,33 @@ def _superseded() -> dict[str, list[str]]:
     }
 
 
+def _backup_before_upgrade(due: list[tuple[str, Path, Path]]) -> Path:
+    """Keep what is about to be replaced, before anything is.
+
+    The files being replaced are byte-for-byte an earlier shipped version, so
+    nothing personal is at stake in them — but this is the one place where a
+    new release rewrites files in the owner's data folder on its own, so it
+    leaves the same trail a restore or an import does: a snapshot of the
+    database (``backups/journal-…-before-template-upgrade.sqlite3``) and a
+    copy of every replaced file (``backups/defaults-…-before-upgrade/``).
+    Raises if either cannot be made; the caller then upgrades nothing.
+    """
+    from datetime import datetime
+
+    from backend import backup
+
+    backup.snapshot("before-template-upgrade")
+    folder = settings.backups_dir / f"defaults-{datetime.now().strftime('%Y%m%d-%H%M%S')}-before-upgrade"
+    for key, _src, dst in due:
+        target = folder / key
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(dst, target)
+    return folder
+
+
 def upgrade_untouched() -> list[str]:
     """Replace data copies that are still an earlier shipped version."""
-    upgraded: list[str] = []
+    due: list[tuple[str, Path, Path]] = []
     for key, old in _superseded().items():
         kind, _, name = key.partition("/")
         if kind not in ("templates", "layouts") or not name or "/" in name or ".." in name:
@@ -126,10 +154,18 @@ def upgrade_untouched() -> list[str]:
             continue
         current = fingerprint(dst)
         if current in old and current != fingerprint(src):
-            shutil.copyfile(src, dst)
-            upgraded.append(key)
-    if upgraded:
-        log.info("Brought untouched defaults up to date: %s", ", ".join(upgraded))
+            due.append((key, src, dst))
+    if not due:
+        return []
+    try:
+        kept = _backup_before_upgrade(due)
+    except Exception as exc:  # noqa: BLE001 - no backup, no upgrade: the old copies still work
+        log.warning("Not upgrading defaults, the backup failed: %s", exc)
+        return []
+    for _key, src, dst in due:
+        shutil.copyfile(src, dst)
+    upgraded = [key for key, _src, _dst in due]
+    log.info("Brought untouched defaults up to date: %s (previous copies in %s)", ", ".join(upgraded), kept.name)
     return upgraded
 
 
