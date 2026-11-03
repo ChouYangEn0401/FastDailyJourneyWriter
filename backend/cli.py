@@ -4,12 +4,16 @@ entry, export it — without starting the server.
     python -m backend.cli templates [--id=<id>] [--brief]
     python -m backend.cli layouts
     python -m backend.cli entry put --date=YYYY-MM-DD --template=<id>
-                                    [--merge=fields|append|fill] [--format=plain|html]  < payload.json
+                                    [--merge=fields|append|fill] [--format=plain|html]
+                                    [--input=payload.json]       (or the JSON on stdin)
     python -m backend.cli entry show (--id=N | --date=YYYY-MM-DD [--template=<id>])
     python -m backend.cli entry list [--limit=30]
     python -m backend.cli export (--id=N | --date=YYYY-MM-DD --template=<id>)
                                  [--format=both|html|card] [--layout=] [--theme=]
                                  [--width=1080] [--paper=] [--out-dir=]
+
+The full reference, in plain Chinese, is docs/cli.md; ``-h`` after any
+command shows its own help and an example.
 
 Add ``--json`` for machine use: then the only thing printed is the envelope.
 The envelope is always the last line, on success and on failure:
@@ -24,7 +28,8 @@ entry written here is exactly an entry written in the editor, and a bad write
 from here is undone the same way (歷史版本). Nothing here calls a model or the
 network.
 
-``entry put`` reads one JSON object from stdin::
+``entry put`` reads one JSON object from stdin (or from ``--input=<file>``,
+because Windows PowerShell re-encodes what it pipes into a program)::
 
     {"answers": {"<field id>": <value>, ...}, "title": "", "closing": "",
      "theme": "", "layout": ""}
@@ -62,52 +67,117 @@ class CliError(Exception):
     """Something the person running the command can fix; the message says how."""
 
 
+#: argparse's own messages are English; the person reading them may not be.
+_ARGPARSE_WORDS = (
+    (r"the following arguments are required: (.+)", "少了必填的參數：{0}"),
+    (r"unrecognized arguments: (.+)", "看不懂的參數：{0}"),
+    (r"argument \{.*?\}: invalid choice: (.+?) \(choose from (.+)\)", "沒有這個指令：{0}（有：{1}）"),
+    (r"argument (\S+): invalid int value: (.+)", "{0} 要是整數（收到：{1}）"),
+    (r"argument (\S+): invalid choice: (.+?) \(choose from (.+)\)", "{0} 只能是 {2}（收到：{1}）"),
+    (r"argument (\S+): expected one argument", "{0} 後面要接一個值（寫成 {0}=值）"),
+    (r"argument (\S+): ignored explicit argument (.+)", "{0} 不接值（收到：{1}）"),
+)
+
+
+def _human(message: str) -> str:
+    import re
+
+    for pattern, words in _ARGPARSE_WORDS:
+        m = re.fullmatch(pattern, message)
+        if m:
+            return words.format(*m.groups())
+    return message
+
+
 class _Parser(argparse.ArgumentParser):
     def error(self, message: str) -> None:  # argparse would print usage and exit 2
-        raise CliError(f"參數有誤：{message}")
+        raise CliError(f"參數有誤：{_human(message)}（-h 看說明）")
+
+
+#: One worked example per command, shown at the bottom of its ``-h``. The same
+#: lines are in docs/cli.md; tests/test_cli.py keeps the two in step.
+EXAMPLES = {
+    "templates": "python -m backend.cli templates --brief --json\n"
+                 "python -m backend.cli templates --id=three-lines --json",
+    "layouts": "python -m backend.cli layouts --json",
+    "entry put": "echo '{\"answers\": {\"fact\": \"今天下雨\"}}' | python -m backend.cli entry put "
+                 "--date=2026-11-02 --template=three-lines --merge=fill --json\n"
+                 "python -m backend.cli entry put --date=2026-11-02 --template=jot --input=answers.json --json",
+    "entry show": "python -m backend.cli entry show --date=2026-11-02 --json\n"
+                  "python -m backend.cli entry show --id=12 --json",
+    "entry list": "python -m backend.cli entry list --limit=7 --json",
+    "export": "python -m backend.cli export --date=2026-11-02 --template=three-lines --format=card --json",
+}
+
+
+def _sub(parent, name: str, key: str, summary: str, description: str, common) -> argparse.ArgumentParser:
+    return parent.add_parser(
+        name, parents=[common], help=summary, description=f"{summary}\n\n{description}",
+        epilog="例：\n  " + EXAMPLES[key].replace("\n", "\n  "),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
 
 
 def _parser() -> argparse.ArgumentParser:
     # Accepted before or after the sub-command. SUPPRESS, because a sub-parser's
     # own default would otherwise overwrite a value given before it.
     common = argparse.ArgumentParser(add_help=False)
-    common.add_argument("--json", action="store_true", default=argparse.SUPPRESS, help="只印最後那一行 JSON")
+    common.add_argument("--json", action="store_true", default=argparse.SUPPRESS,
+                        help="給程式用：只印一行 JSON 信封（成功 {\"ok\": true, \"result\": …}，失敗 {\"ok\": false, \"error\": …}）")
     common.add_argument("--data-dir", default=argparse.SUPPRESS,
-                        help="日記資料夾（預設跟 app 一樣：JOURNAL_DATA_DIR 或 data/）")
+                        help="日記資料夾（預設跟 app 一樣：JOURNAL_DATA_DIR，沒設就是專案裡的 data/）")
 
-    p = _Parser(prog="python -m backend.cli", description="每日日記的命令列。", parents=[common])
-    sub = p.add_subparsers(dest="command", parser_class=_Parser)
+    p = _Parser(
+        prog="python -m backend.cli", parents=[common],
+        description="每日日記的命令列：不開伺服器，列題組、寫入、讀出、匯出。\n"
+                    "每個指令後面加 -h 看它自己的說明和例子；完整參考在 docs/cli.md。",
+        epilog="例：\n  python -m backend.cli templates --brief\n  python -m backend.cli entry show --date=2026-11-02",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    sub = p.add_subparsers(dest="command", parser_class=_Parser, metavar="{templates,layouts,entry,export}")
 
-    t = sub.add_parser("templates", parents=[common], help="列出題組與每一題的結構")
-    t.add_argument("--id", help="只看這一個題組")
-    t.add_argument("--brief", action="store_true", help="只列名稱、什麼時候用，不列題目")
+    t = _sub(sub, "templates", "templates", "列出題組（範本）與每一題的結構",
+             "題組＝一組問題。不帶參數列出全部；--id 看一個題組的每一題（題型、選項、填空格數、ai_hint＝這一題怎麼填）。", common)
+    t.add_argument("--id", help="只看這一個題組，例 --id=three-lines")
+    t.add_argument("--brief", action="store_true", help="只列名稱、什麼時候用、幾分鐘，不列題目")
 
-    sub.add_parser("layouts", parents=[common], help="列出輸出版型")
+    _sub(sub, "layouts", "layouts", "列出輸出版型", "export 的 --layout 可以用這裡列出的 id。", common)
 
-    e = sub.add_parser("entry", parents=[common], help="寫入、讀出一篇日記")
-    es = e.add_subparsers(dest="action", parser_class=_Parser)
-    put = es.add_parser("put", parents=[common], help="新增或更新某一天、某個題組的那一篇（內容從 stdin 的 JSON）")
-    put.add_argument("--date", required=True)
-    put.add_argument("--template", required=True)
-    put.add_argument("--merge", choices=MERGES, default="fields")
-    put.add_argument("--format", choices=FORMATS, default="plain")
-    show = es.add_parser("show", parents=[common], help="讀出一篇（或某一天的全部）")
-    show.add_argument("--id", type=int)
-    show.add_argument("--date")
-    show.add_argument("--template")
-    lst = es.add_parser("list", parents=[common], help="最近寫過的日記（只有日期、題組、字數）")
-    lst.add_argument("--limit", type=int, default=30)
+    e = sub.add_parser("entry", parents=[common], help="寫入、讀出、列出日記（put／show／list）",
+                       description="一篇日記＝某一天＋一個題組。put 寫入、show 讀出、list 列出最近的。")
+    es = e.add_subparsers(dest="action", parser_class=_Parser, metavar="{put,show,list}")
+    put = _sub(es, "put", "entry put", "新增或更新某一天、某個題組的那一篇",
+               "內容是一個 JSON 物件，從 stdin 讀（或 --input=檔案）：\n"
+               "  {\"answers\": {\"題目 id\": 答案}, \"title\": \"\", \"closing\": \"\", \"theme\": \"\", \"layout\": \"\"}\n"
+               "同一天同一個題組再寫一次＝更新那一篇。沒給的題目一律不動。", common)
+    put.add_argument("--date", required=True, help="哪一天，YYYY-MM-DD")
+    put.add_argument("--template", required=True, help="題組 id（templates 看全部）")
+    put.add_argument("--merge", choices=MERGES, default="fields",
+                     help="已經有答案的題目怎麼辦：fields＝換成新的（預設）；append＝接在後面；fill＝不動、只填空著的")
+    put.add_argument("--format", choices=FORMATS, default="plain",
+                     help="文字是純文字（plain，預設，會跳脫、保留換行）還是編輯器的 HTML（html）")
+    put.add_argument("--input", help="從這個 UTF-8 檔案讀內容，不從 stdin（Windows PowerShell 管線會把中文弄壞時用）")
+    show = _sub(es, "show", "entry show", "讀出一篇，或某一天的全部",
+                "給 --id，或給 --date（可再加 --template 只看那一個題組）。每一篇有 text（純文字）和 answers（原始答案）。", common)
+    show.add_argument("--id", type=int, help="日記編號（put、list 回的 id）")
+    show.add_argument("--date", help="哪一天，YYYY-MM-DD")
+    show.add_argument("--template", help="只看這個題組的那一篇")
+    lst = _sub(es, "list", "entry list", "最近寫過的日記",
+               "只有日期、題組、字數、編號，不印內容。", common)
+    lst.add_argument("--limit", type=int, default=30, help="最多幾篇（1–500，預設 30）")
 
-    x = sub.add_parser("export", parents=[common], help="把一篇輸出成 HTML 頁面和（或）卡片 SVG")
-    x.add_argument("--id", type=int)
-    x.add_argument("--date")
-    x.add_argument("--template")
-    x.add_argument("--format", choices=EXPORTS, default="both")
-    x.add_argument("--layout")
-    x.add_argument("--theme")
-    x.add_argument("--width", type=int, default=1080)
-    x.add_argument("--paper", choices=PAPERS)
-    x.add_argument("--out-dir")
+    x = _sub(sub, "export", "export", "把一篇輸出成 HTML 頁面和（或）卡片 SVG",
+             "給 --id，或 --date 加 --template。檔案寫到日記資料夾的 exports/（--out-dir 可以換），回傳完整路徑。\n"
+             "--layout、--theme 只影響這一次輸出，不改那一篇的設定。", common)
+    x.add_argument("--id", type=int, help="日記編號")
+    x.add_argument("--date", help="哪一天，YYYY-MM-DD（要搭 --template）")
+    x.add_argument("--template", help="題組 id")
+    x.add_argument("--format", choices=EXPORTS, default="both", help="both＝HTML＋卡片（預設）；html；card")
+    x.add_argument("--layout", help="版型 id（layouts 看全部）")
+    x.add_argument("--theme", help="紙張顏色：letterpress、notebook、linen、dawn、midnight")
+    x.add_argument("--width", type=int, default=1080, help="卡片寬度，480–2400（預設 1080）")
+    x.add_argument("--paper", choices=PAPERS, help="卡片的紙：ruled、grid、plain、dotted（預設跟版型）")
+    x.add_argument("--out-dir", help="輸出到這個資料夾（預設是日記資料夾的 exports/）")
     return p
 
 
@@ -291,10 +361,23 @@ def _summary(entry, template=None) -> dict:
     }
 
 
-def _read_payload() -> dict:
-    raw = sys.stdin.buffer.read().decode("utf-8-sig") if not sys.stdin.isatty() else ""
+def _read_payload(path: str | None = None) -> dict:
+    if path:
+        try:
+            data = Path(path).read_bytes()
+        except OSError as exc:
+            raise CliError(f"讀不到 --input 的檔案：{path}（{type(exc).__name__}）") from exc
+        source = "--input 的檔案"
+    else:
+        stdin = sys.stdin
+        data = stdin.buffer.read() if stdin is not None and not stdin.isatty() else b""
+        source = "stdin"
+    try:
+        raw = data.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise CliError(f"{source}要是 UTF-8（Windows PowerShell 的管線會換成別的編碼：改用 --input=檔案）") from exc
     if not raw.strip():
-        raise CliError("stdin 是空的：要給一個 JSON 物件，例如 {\"answers\": {\"fact\": \"今天…\"}}")
+        raise CliError(f"{source}是空的：要給一個 JSON 物件，例如 {{\"answers\": {{\"fact\": \"今天…\"}}}}")
     try:
         payload = json.loads(raw)
     except ValueError as exc:
@@ -319,7 +402,7 @@ def cmd_entry_put(args) -> tuple[dict, str]:
     template = get_template(args.template)
     if template is None:
         raise CliError(f"找不到題組：{args.template}（python -m backend.cli templates 看全部）")
-    payload = _read_payload()
+    payload = _read_payload(args.input)
     fields = template.field_map()
 
     existing = storage.get_entry_for(day, template.id)
@@ -512,10 +595,13 @@ def _emit(envelope: dict) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    # Windows consoles default to a legacy code page; everything here is UTF-8.
+    # Windows consoles default to a legacy code page (cp950 here), which cannot
+    # encode most of what a journal holds — emoji included. Everything this
+    # prints is UTF-8, whatever PYTHONIOENCODING says; ``replace`` so that even
+    # a lone surrogate from a bad payload cannot crash the last line.
     for stream in (sys.stdout, sys.stderr):
         try:
-            stream.reconfigure(encoding="utf-8")
+            stream.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, ValueError):
             pass
     as_json = "--json" in (argv if argv is not None else sys.argv[1:])

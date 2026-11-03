@@ -410,6 +410,7 @@ LICENSE                     AGPL-3.0
 CONTRIBUTING.md             想幫忙的話從這裡開始
 IDEAS.md                    討論過但還沒做的想法
 docs/templates.md           內建題組一覽 ＋ 自己寫題組的說明書
+docs/cli.md                 命令列的完整參考（給腳本、AI 助理、ClawBot）
 skills/diary-templates/     給 AI 讀的說明：有哪些題組、什麼情況選哪個、每一題怎麼填、怎麼匯出
 content/superseded.json     內建題組舊版本的指紋：沒改過的 data/ 副本會自動換成新版
 tests/                      命令列與題組的測試（python -m unittest，零相依）
@@ -420,19 +421,17 @@ docs/images/                README 用的截圖（虛構內容）
 
 ## 命令列（不用開伺服器）
 
-給腳本、排程、或 AI 助理用。讀寫的是同一份 `data/`（或 `JOURNAL_DATA_DIR`／`--data-dir=`），
-經過跟編輯器一樣的清理與歷史版本，所以從這裡寫壞了，一樣在「歷史」救得回來。
+給腳本、排程、或 AI 助理用：列題組、寫一篇、讀一篇、匯出成 HTML／卡片。讀寫的是跟編輯器同一份日記，
+寫壞了一樣在「歷史」救得回來。
 
 ```bash
-python -m backend.cli templates [--id=capsule] [--brief]     # 題組與每一題的結構（含 ai_hint）
-python -m backend.cli entry put --date=2026-11-02 --template=three-lines < answers.json
-python -m backend.cli entry show --date=2026-11-02            # 那一天的全部（純文字＋原始答案）
-python -m backend.cli export --date=2026-11-02 --template=three-lines   # → data/exports/ 的 .html ＋ .svg
+python -m backend.cli templates --brief                      # 有哪些題組
+python -m backend.cli entry show --date=2026-11-02            # 那一天寫了什麼
+python -m backend.cli entry put -h                            # 每個指令加 -h：說明＋例子
 ```
 
-加 `--json` 就只印一行 `{"ok": true, "result": {…}}`（失敗是 `{"ok": false, "error": "…"}`，結束碼 1）。
-一天、一個題組是一篇：`entry put` 對同一天同一個題組是更新，`--merge=append` 接在後面、`--merge=fill` 只填空著的題目。
-AI 怎麼選題組、怎麼填，寫在 **[skills/diary-templates/SKILL.md](skills/diary-templates/SKILL.md)**。
+**完整參考在 [docs/cli.md](docs/cli.md)**（每個指令與參數、`--json` 信封、結束碼、`--data-dir`、內容怎麼餵、隱私）；
+AI 怎麼選題組、怎麼填，寫在 [skills/diary-templates/SKILL.md](skills/diary-templates/SKILL.md)。
 
 ## API
 

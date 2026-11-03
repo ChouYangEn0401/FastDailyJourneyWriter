@@ -115,16 +115,26 @@ python -m backend.cli templates --id=capsule --json     # 一個題組的每一�
 
 ## 命令列
 
+完整參考（每個參數、回傳的欄位、錯誤）在 **[docs/cli.md](../../docs/cli.md)**；每個指令加 `-h` 也有說明和例子。
 在這個專案的資料夾裡跑（Windows：`.venv\Scripts\python.exe -m backend.cli …`）。加 `--json` 只印最後一行信封：
-`{"ok": true, "result": {…}}`，失敗 `{"ok": false, "error": "一句人話"}`、結束碼 1。
+`{"ok": true, "result": {…}}`，失敗 `{"ok": false, "error": "一句人話"}`、結束碼 1。輸出一律是 UTF-8。
 
 ```bash
+# 題組：全部（--brief 不列題目）、一個題組的每一題
+python -m backend.cli templates --brief --json
+python -m backend.cli templates --id=three-lines --json
+
 # 寫入：一天、一個題組＝一篇。同一天同一個題組再寫一次是「更新那一篇」
 echo '{"answers": {"fact": "今天…", "feel": "有點累", "overall": "普通"}}' \
   | python -m backend.cli entry put --date=2026-11-02 --template=three-lines --merge=fill --json
+python -m backend.cli entry put --date=2026-11-02 --template=three-lines --merge=fill --input=answers.json --json
 
-# 讀出：那一天的全部（每一篇有 text＝純文字、answers＝原始答案）
+# 讀出：那一天的全部（每一篇有 text＝純文字、answers＝原始答案）；或一篇
 python -m backend.cli entry show --date=2026-11-02 --json
+python -m backend.cli entry show --id=12 --json
+
+# 最近寫過的（只有日期、題組、字數、編號，不印內容）
+python -m backend.cli entry list --limit=7 --json
 
 # 匯出：一頁 HTML ＋ 一張卡片 SVG，寫到 data/exports/（--out-dir= 可以換）
 python -m backend.cli export --date=2026-11-02 --template=three-lines --json
@@ -132,7 +142,8 @@ python -m backend.cli export --date=2026-11-02 --template=three-lines --json
 python -m backend.cli layouts --json      # 版型清單
 ```
 
-`entry put` 的 stdin：`{"answers": {題目 id: 答案}, "title": "", "closing": "", "theme": "", "layout": ""}`。
+`entry put` 的內容（stdin，或 `--input=` 一個 UTF-8 檔案）：`{"answers": {題目 id: 答案}, "title": "", "closing": "", "theme": "", "layout": ""}`。
+Windows 的 cmd／PowerShell 管線送出去的不是 UTF-8（中文會壞）：在那裡用 `--input=檔案`。
 
 - `--merge=fields`（預設）：給了的題目換成新的，沒給的不動。
 - `--merge=append`：清單接在後面、文字接在空一行之後（同一天又記了幾則）。
