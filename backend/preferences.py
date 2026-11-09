@@ -103,10 +103,10 @@ _UNSET = ("", None, "null", "none")
 
 def describe() -> list[dict]:
     """Every setting with its current value, default and meaning — for ``settings``."""
-    prefs, blank = load(), Preferences()
+    prefs, blank = load().model_dump(mode="json"), Preferences().model_dump(mode="json")
+    blank["palette"] = [p.model_dump() for p in DEFAULT_PALETTE]
     return [
-        {"key": key, "value": getattr(prefs, key), "default": getattr(blank, key) if key != "palette" else
-         [p.model_dump() for p in DEFAULT_PALETTE], "what": what, "how": how}
+        {"key": key, "value": prefs[key], "default": blank[key], "what": what, "how": how}
         for key, (what, how) in FIELDS.items()
     ]
 

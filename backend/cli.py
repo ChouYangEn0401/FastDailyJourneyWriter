@@ -176,12 +176,12 @@ def _parser() -> argparse.ArgumentParser:
     t = _sub(sub, "templates", "templates", "列出題組（範本）與每一題的結構；suggest 替一段文字挑題組",
              "題組＝一組問題。不帶參數列出全部；--id 看一個題組的每一題（題型、選項、填空格數、ai_hint＝這一題怎麼填）。\n"
              "每個題組都有分類：structure（一段式／三段式／多段式）、reflection（只記錄／有反思／有信仰的反思／有禱告）、\n"
-             "flow（走過哪些步驤，照順序）。--structure、--reflection、--flow、--tag 可以篩選（逗號分開＝其中之一）。", common)
+             "flow（走過哪些步驟，照順序）。--structure、--reflection、--flow、--tag 可以篩選（逗號分開＝其中之一）。", common)
     t.add_argument("--id", help="只看這一個題組，例 --id=three-lines")
     t.add_argument("--brief", action="store_true", help="只列名稱、什麼時候用、幾分鐘、分類，不列題目")
     t.add_argument("--structure", default="", help="只列這種結構：one-part、three-part、n-part")
     t.add_argument("--reflection", default="", help="只列這種反思層級：none、reflection、devotional、prayer（逗號分開＝其中之一）")
-    t.add_argument("--flow", default="", help="只列走過這些步驤的：events、scripture、reflection、prayer…（逗號分開＝都要有）")
+    t.add_argument("--flow", default="", help="只列走過這些步驟的：events、scripture、reflection、prayer…（逗號分開＝都要有）")
     t.add_argument("--tag", default="", help="只列有這個標籤的（逗號分開＝其中之一）")
     tsub = t.add_subparsers(dest="action", parser_class=_Parser, metavar="{suggest,categories,restore}")
     sg = _sub(tsub, "suggest", "templates suggest", "替一段文字挑題組：照規則排序，說出為什麼",
@@ -190,7 +190,7 @@ def _parser() -> argparse.ArgumentParser:
               "字裡沒提到信仰時，信仰類題組照設定 suggest_faith 處理（auto＝放後面）。", common)
     sg.add_argument("--text", required=True, help="使用者寫的那段話（整段放在一個參數裡）")
     sg.add_argument("--limit", type=int, default=5, help="最多幾個建議（1–20，預設 5）")
-    _sub(tsub, "categories", "templates categories", "分類的字彙表：每一種結構、反思層級、步驤、標籤各有哪些題組",
+    _sub(tsub, "categories", "templates categories", "分類的字彙表：每一種結構、反思層級、步驟、標籤各有哪些題組",
          "給挑題組的畫面用（Telegram 的按鈕就是從這裡來的）。每一項有 id（ASCII）、label（中文）、templates（題組 id）。", common)
     rs = _sub(tsub, "restore", "templates restore", "把一個內建題組放回（或還原成）內建的版本",
               "setup init --preset=generic 沒裝的題組、或改壞了的，用這個拿回來。只動 templates/ 裡那一個檔，不碰日記。", common)
@@ -792,7 +792,7 @@ def cmd_export(args) -> tuple[dict, str]:
             raise CliError(f"沒有這種紙張顏色：{args.theme}（{'／'.join(THEMES)}）")
         updates["theme"] = args.theme
     if args.layout:
-        if get_layout(args.layout) is None:
+        if not _layout_exists(args.layout):      # get_layout() falls back to the default; that is not "exists"
             raise CliError(f"沒有這個版型：{args.layout}（python -m backend.cli layouts 看全部）")
         updates["layout"] = args.layout
     if updates:
@@ -821,6 +821,12 @@ def cmd_export(args) -> tuple[dict, str]:
     return result, f"輸出了 {entry.entry_date} 的「{template.name}」：{names}（在 {out_dir}）"
 
 
+def _layout_exists(layout_id: str) -> bool:
+    from backend.render.layout_registry import all_layouts
+
+    return any(x.id == layout_id for x in all_layouts())
+
+
 def _setting_row(row: dict) -> str:
     return f"{row['key']} = {json.dumps(row['value'], ensure_ascii=False)}　（{row['what']}；{row['how']}）"
 
@@ -845,14 +851,13 @@ def cmd_settings_get(args) -> tuple[dict, str]:
 
 def cmd_settings_set(args) -> tuple[dict, str]:
     from backend import preferences
-    from backend.render.layout_registry import get_layout
     from backend.render.themes import THEMES
     from backend.template_registry import get_template
 
     key, value = str(args.key or ""), str(args.value if args.value is not None else "")
     checks = {
         "template_id": (lambda v: get_template(v) is not None, "沒有這個題組（templates 看全部）"),
-        "layout": (lambda v: get_layout(v) is not None, "沒有這個版型（layouts 看全部）"),
+        "layout": (_layout_exists, "沒有這個版型（layouts 看全部）"),
         "theme": (lambda v: v in THEMES, f"紙張顏色只有 {'、'.join(THEMES)}"),
         "card_paper": (lambda v: v in PAPERS, f"紙只有 {'、'.join(PAPERS)}"),
     }
