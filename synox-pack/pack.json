@@ -1,8 +1,8 @@
 {
   "name": "diary",
   "title": "📔 日記",
-  "summary": "挑題組、寫一篇、看某天、做成一頁 HTML 或一張卡片；AI 整理的版本一律標明、附原文",
-  "version": "0.1.0",
+  "summary": "隨手記一則、挑題組寫一篇、看某天、做成一頁 HTML 或一張卡片；AI 整理的版本一律標明、附原文",
+  "version": "0.2.0",
   "kind": "cli",
   "group": "diary",
   "access": "member",
@@ -20,7 +20,14 @@
     "env": { "PYTHONIOENCODING": "utf-8" },
     "commands": [
       {
-        "name": "templates", "default": true, "effect": "READ",
+        "name": "jot", "default": true, "effect": "WRITE",
+        "summary": "隨手記一則：直接打字，記進今天的「隨手記」（接在之前那幾則後面，不蓋掉）",
+        "argv": ["entry", "put", "--date=today", "--template=jot", "--merge=fill", "--data-dir={user_data_dir}/diary"],
+        "stdin": "{text}",
+        "fields": [{ "name": "text", "ask": "要記的話", "required": true }]
+      },
+      {
+        "name": "templates", "effect": "READ",
         "summary": "有哪些題組（名稱、什麼時候用、幾分鐘、分類）",
         "argv": ["templates", "--brief", "--data-dir={user_data_dir}/diary"]
       },
@@ -54,13 +61,13 @@
       },
       {
         "name": "put", "effect": "WRITE",
-        "summary": "把作者自己的話寫進某一天、某個題組（只填空著的題目）",
+        "summary": "把作者自己的話寫進某一天、某個題組（只填空著的題目；直接打字＝寫進第一題）",
         "argv": ["entry", "put", "--date={date}", "--template={template}", "--merge=fill", "--data-dir={user_data_dir}/diary"],
         "stdin": "{answers}",
         "fields": [
           { "name": "date", "ask": "哪一天（YYYY-MM-DD、today、yesterday）", "required": true },
           { "name": "template", "ask": "題組 id", "required": true },
-          { "name": "answers", "ask": "JSON：{\"answers\": {\"題目 id\": 答案}, \"closing\": \"\"}", "required": true }
+          { "name": "answers", "ask": "要記的話（直接打字＝寫進第一題）或 JSON：{\"answers\": {\"題目 id\": 答案}, \"closing\": \"\"}", "required": true }
         ]
       },
       {
