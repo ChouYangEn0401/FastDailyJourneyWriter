@@ -57,10 +57,47 @@ def _save_manifest(installed: set[str]) -> None:
     )
 
 
-def install_seeds(*, force: bool = False) -> list[str]:
-    """Copy any not-yet-installed defaults into the data directory."""
+#: Starter sets: ``{"generic": {"templates": [ids] | "all", "settings": {…}}, …}``.
+#: Which question sets a fresh install gets is data, not a decision made here.
+PRESETS = SEED_DIR / "presets.json"
+
+
+def presets() -> dict[str, dict]:
+    try:
+        raw = json.loads(PRESETS.read_text("utf-8"))
+    except Exception as exc:  # noqa: BLE001 - no table means "everything", as before
+        log.warning("Ignoring %s: %s", PRESETS.name, exc)
+        return {}
+    return {k: v for k, v in raw.items() if isinstance(v, dict) and not k.startswith("_")}
+
+
+def _preset_templates(name: str) -> set[str] | None:
+    """Template ids the preset installs; ``None`` = all of them."""
+    chosen = presets().get(name, {}).get("templates", "all")
+    return None if chosen == "all" or not isinstance(chosen, list) else {str(t) for t in chosen}
+
+
+def _wanted(key: str, keep: set[str] | None) -> bool:
+    kind, _, name = key.partition("/")
+    return keep is None or kind != "templates" or Path(name).stem in keep
+
+
+def install_seeds(*, force: bool = False, keep: set[str] | None = None) -> list[str]:
+    """Copy any not-yet-installed defaults into the data directory.
+
+    ``keep`` limits which question sets are copied (the preset chosen with
+    ``setup init``); the others are recorded as handled so they do not turn
+    up on the next start. Without it, the preset in preferences.json applies,
+    and with no preset everything ships — the behaviour every install had
+    before presets existed.
+    """
     installed = set() if force else _load_manifest()
     added: list[str] = []
+    if keep is None and not force:
+        from backend import preferences
+
+        name = preferences.load().preset
+        keep = _preset_templates(name) if name else None
 
     pairs = (
         (SEED_DIR / "templates", settings.templates_dir),
@@ -80,6 +117,9 @@ def install_seeds(*, force: bool = False) -> list[str]:
             if dst.exists() and not force:
                 installed.add(key)
                 continue
+            if not _wanted(key, keep):
+                installed.add(key)        # handled: left out on purpose
+                continue
             shutil.copyfile(src, dst)
             installed.add(key)
             added.append(key)
@@ -90,6 +130,38 @@ def install_seeds(*, force: bool = False) -> list[str]:
         log.info("Installed defaults: %s", ", ".join(added))
     upgrade_untouched()
     return added
+
+
+def init_preset(name: str) -> dict:
+    """Set a data folder up with one starter set (``setup init --preset=``).
+
+    Copies the preset's question sets that are not there yet, records every
+    other shipped set as handled, writes the preset's settings into
+    preferences.json (only keys still at their default) and remembers the
+    preset. Never deletes or overwrites a file, so running it on an install
+    that already has everything changes only the preferences.
+    """
+    from backend import preferences
+
+    table = presets()
+    if name not in table:
+        raise ValueError(f"沒有這個起始組合：{name}（有：{'、'.join(table) or '沒有 presets.json'}）")
+    before = {p.stem for p in settings.templates_dir.glob("*.json")}
+    added = install_seeds(keep=_preset_templates(name))
+    prefs = preferences.load()
+    blank = preferences.Preferences()
+    changes = {"preset": name}
+    for key, value in (table[name].get("settings") or {}).items():
+        if key in preferences.FIELDS and getattr(prefs, key, None) == getattr(blank, key, None):
+            changes[key] = value
+    prefs = preferences.save(prefs.model_copy(update=changes))
+    return {
+        "preset": name, "label": table[name].get("label", name),
+        "templates_added": sorted(Path(k).stem for k in added if k.startswith("templates/")),
+        "templates_now": sorted(p.stem for p in settings.templates_dir.glob("*.json")),
+        "already_had": sorted(before),
+        "settings": {k: getattr(prefs, k) for k in changes},
+    }
 
 
 def fingerprint(path: Path) -> str:
