@@ -35,6 +35,10 @@ class RenderedField:
     #: ``True`` for LIST fields, so renderers can number them.
     numbered: bool = False
     plain: str = ""
+    #: ``"ai"`` when the text was written by an assistant on the author's
+    #: behalf (``entry put --author=ai``). The label already says 「AI 整理」
+    #: so every layout shows it; this is for renderers that want to do more.
+    author: str = "user"
 
     @property
     def is_empty(self) -> bool:
@@ -204,11 +208,30 @@ def _render_field(
     return rendered
 
 
+#: What an assistant-written field is labelled, and what the author's own
+#: words are called next to it. Every layout prints field labels, so this is
+#: enough for the mark to show on the page, the card and the plain text.
+AI_LABEL = "（AI 整理）"
+SOURCE_LABEL = "作者原文"
+SOURCE_COLOR = "#6b675e"
+
+
+def _source_field(field_id: str, text: str) -> RenderedField:
+    rendered = RenderedField(id=f"{field_id}__source", label=SOURCE_LABEL, kind=FieldKind.TEXT, color=SOURCE_COLOR)
+    runs = [Run(text, SOURCE_COLOR)]
+    rendered.lines = [ln for ln in _split_lines(runs) if any(r.text.strip() for r in ln)]
+    rendered.plain = text
+    return rendered
+
+
 def build_document(
     entry: Entry, template: JournalTemplate, *, drop_empty: bool = True
 ) -> RenderedDoc:
     sections: list[RenderedSection] = []
     palette: list[str] = []
+    marks = entry.provenance.get("fields", {}) if isinstance(entry.provenance, dict) else {}
+    marks = marks if isinstance(marks, dict) else {}
+    ai_written = False
 
     for ts in template.sections:
         rs = RenderedSection(
@@ -219,13 +242,29 @@ def build_document(
             rf = _render_field(tf, entry.answers.get(tf.id), color)
             if drop_empty and rf.is_empty:
                 continue
-            rs.fields.append(rf)
+            mark = marks.get(tf.id)
+            if isinstance(mark, dict) and mark.get("author") == "ai":
+                # Polished by an assistant: say so on the page, and keep the
+                # author's own words right under it.
+                rf.label, rf.author, ai_written = rf.label + AI_LABEL, "ai", True
+                rs.fields.append(rf)
+                if str(mark.get("source") or "").strip():
+                    rs.fields.append(_source_field(tf.id, str(mark["source"]).strip()))
+            else:
+                rs.fields.append(rf)
             if color not in palette:
                 palette.append(color)
         if not (drop_empty and rs.is_empty):
             sections.append(rs)
         if ts.color not in palette:
             palette.append(ts.color)
+
+    source_text = str(entry.provenance.get("source_text") or "").strip() if isinstance(entry.provenance, dict) else ""
+    closing_mark = marks.get("closing")
+    closing_ai = isinstance(closing_mark, dict) and closing_mark.get("author") == "ai"
+    if source_text and (ai_written or closing_ai):
+        sections.append(RenderedSection(id="source", title=SOURCE_LABEL, color=SOURCE_COLOR, icon="✎",
+                                        fields=[_source_field("entry", source_text)]))
 
     closing_runs = to_runs(entry.closing, "#22252a")
     closing_lines = [
@@ -250,5 +289,5 @@ def build_document(
         closing_lines=closing_lines,
         word_count=len([c for c in body if not c.isspace()]),
         palette=palette,
-        closing_label=template.closing_label or "給主的話",
+        closing_label=(template.closing_label or "給主的話") + (AI_LABEL if closing_ai else ""),
     )

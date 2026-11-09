@@ -1,16 +1,22 @@
 """Command line for the journal: read the question sets, write and read an
-entry, export it — without starting the server.
+entry, export it, change a setting — without starting the server.
 
-    python -m backend.cli templates [--id=<id>] [--brief]
+    python -m backend.cli templates [--id=<id>] [--brief] [--structure=] [--reflection=] [--flow=] [--tag=]
+    python -m backend.cli templates suggest --text="<what was written>" [--limit=5]
+    python -m backend.cli templates categories
+    python -m backend.cli templates restore --id=<id>
     python -m backend.cli layouts
-    python -m backend.cli entry put --date=YYYY-MM-DD --template=<id>
+    python -m backend.cli entry put --date=YYYY-MM-DD|today|yesterday --template=<id>
                                     [--merge=fields|append|fill] [--format=plain|html]
+                                    [--overwrite=<field,...>|all] [--author=user|ai] [--source-text=<file>]
                                     [--input=payload.json]       (or the JSON on stdin)
     python -m backend.cli entry show (--id=N | --date=YYYY-MM-DD [--template=<id>])
     python -m backend.cli entry list [--limit=30]
     python -m backend.cli export (--id=N | --date=YYYY-MM-DD --template=<id>)
                                  [--format=both|html|card] [--layout=] [--theme=]
                                  [--width=1080] [--paper=] [--out-dir=]
+    python -m backend.cli settings | settings get --key=<k> | settings set --key=<k> --value=<v>
+    python -m backend.cli setup | setup init --preset=generic|devotional
 
 The full reference, in plain Chinese, is docs/cli.md; ``-h`` after any
 command shows its own help and an example.
@@ -32,7 +38,7 @@ network.
 because Windows PowerShell re-encodes what it pipes into a program)::
 
     {"answers": {"<field id>": <value>, ...}, "title": "", "closing": "",
-     "theme": "", "layout": ""}
+     "theme": "", "layout": "", "source_text": "", "sources": {"<field id>": ""}}
 
 Values follow the field kind (see docs/templates.md). To be forgiving with
 assistants, a choice may be given by its label as well as its id, a list may
@@ -43,7 +49,17 @@ than the editor's HTML.
 ``--merge`` decides what happens to a field that already has an answer:
 ``fields`` replaces it (fields not mentioned are always kept), ``append``
 adds to it (list items after the existing ones, text after a blank line) and
-``fill`` leaves it alone and reports it under ``kept``.
+``fill`` leaves it alone and reports it under ``kept``. ``--overwrite`` names
+the fields that may be replaced anyway (or ``all``), and reports them under
+``overwritten`` — the only way to change a question that already has an
+answer without touching the rest of the entry.
+
+``--author=ai`` is for an assistant writing a polished version of what the
+author said: every field it fills is marked and rendered as 「AI 整理」 with the
+author's original next to it (``--source-text=<file>`` or ``source_text`` /
+``sources`` in the payload — required), a field the author already wrote is
+never replaced unless named in ``--overwrite`` (reported under ``protected``),
+and ``--merge=append`` is refused because it would mix the two voices.
 """
 
 from __future__ import annotations
@@ -53,7 +69,7 @@ import html
 import json
 import os
 import sys
-from datetime import date
+from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -61,6 +77,9 @@ MERGES = ("fields", "append", "fill")
 FORMATS = ("plain", "html")
 EXPORTS = ("both", "html", "card")
 PAPERS = ("ruled", "grid", "plain", "dotted")
+AUTHORS = ("user", "ai")
+PRESETS = ("generic", "devotional")
+DAY_WORDS = {"today": 0, "今天": 0, "yesterday": 1, "昨天": 1}
 
 
 class CliError(Exception):
@@ -98,15 +117,31 @@ class _Parser(argparse.ArgumentParser):
 #: lines are in docs/cli.md; tests/test_cli.py keeps the two in step.
 EXAMPLES = {
     "templates": "python -m backend.cli templates --brief --json\n"
+                 "python -m backend.cli templates --brief --reflection=none,reflection --json\n"
                  "python -m backend.cli templates --id=three-lines --json",
+    "templates suggest": "python -m backend.cli templates suggest --text=\"今天跟客戶開會被罵，很擔心案子\" --json",
+    "templates categories": "python -m backend.cli templates categories --json",
+    "templates restore": "python -m backend.cli templates restore --id=capsule --json",
     "layouts": "python -m backend.cli layouts --json",
     "entry put": "echo '{\"answers\": {\"fact\": \"今天下雨\"}}' | python -m backend.cli entry put "
                  "--date=2026-11-02 --template=three-lines --merge=fill --json\n"
-                 "python -m backend.cli entry put --date=2026-11-02 --template=jot --input=answers.json --json",
+                 "python -m backend.cli entry put --date=2026-11-02 --template=jot --input=answers.json --json\n"
+                 "python -m backend.cli entry put --date=2026-11-02 --template=capsule --merge=fill --overwrite=verse1 "
+                 "--input=answers.json --json\n"
+                 "python -m backend.cli entry put --date=today --template=day-review --author=ai --source-text=original.txt "
+                 "--input=answers.json --json",
     "entry show": "python -m backend.cli entry show --date=2026-11-02 --json\n"
                   "python -m backend.cli entry show --id=12 --json",
     "entry list": "python -m backend.cli entry list --limit=7 --json",
     "export": "python -m backend.cli export --date=2026-11-02 --template=three-lines --format=card --json",
+    "settings": "python -m backend.cli settings --json",
+    "settings get": "python -m backend.cli settings get --key=day_start_hour --json",
+    "settings set": "python -m backend.cli settings set --key=day_start_hour --value=4 --json\n"
+                    "python -m backend.cli settings set --key=template_id --value=three-lines --json\n"
+                    "python -m backend.cli settings set --key=palette --value=default --json",
+    "setup": "python -m backend.cli setup --json",
+    "setup init": "python -m backend.cli setup init --preset=generic --json\n"
+                  "python -m backend.cli setup init --preset=devotional --data-dir=D:\\journal --json",
 }
 
 
@@ -129,17 +164,37 @@ def _parser() -> argparse.ArgumentParser:
 
     p = _Parser(
         prog="python -m backend.cli", parents=[common],
-        description="每日日記的命令列：不開伺服器，列題組、寫入、讀出、匯出。\n"
+        description="每日日記的命令列：不開伺服器，列題組、挑題組、寫入、讀出、匯出、改設定。\n"
                     "每個指令後面加 -h 看它自己的說明和例子；完整參考在 docs/cli.md。",
-        epilog="例：\n  python -m backend.cli templates --brief\n  python -m backend.cli entry show --date=2026-11-02",
+        epilog="例：\n  python -m backend.cli templates --brief\n  python -m backend.cli entry show --date=2026-11-02\n"
+               "  python -m backend.cli templates suggest --text=\"今天很累但很感謝\"",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    sub = p.add_subparsers(dest="command", parser_class=_Parser, metavar="{templates,layouts,entry,export}")
+    sub = p.add_subparsers(dest="command", parser_class=_Parser,
+                           metavar="{templates,layouts,entry,export,settings,setup}")
 
-    t = _sub(sub, "templates", "templates", "列出題組（範本）與每一題的結構",
-             "題組＝一組問題。不帶參數列出全部；--id 看一個題組的每一題（題型、選項、填空格數、ai_hint＝這一題怎麼填）。", common)
+    t = _sub(sub, "templates", "templates", "列出題組（範本）與每一題的結構；suggest 替一段文字挑題組",
+             "題組＝一組問題。不帶參數列出全部；--id 看一個題組的每一題（題型、選項、填空格數、ai_hint＝這一題怎麼填）。\n"
+             "每個題組都有分類：structure（一段式／三段式／多段式）、reflection（只記錄／有反思／有信仰的反思／有禱告）、\n"
+             "flow（走過哪些步驤，照順序）。--structure、--reflection、--flow、--tag 可以篩選（逗號分開＝其中之一）。", common)
     t.add_argument("--id", help="只看這一個題組，例 --id=three-lines")
-    t.add_argument("--brief", action="store_true", help="只列名稱、什麼時候用、幾分鐘，不列題目")
+    t.add_argument("--brief", action="store_true", help="只列名稱、什麼時候用、幾分鐘、分類，不列題目")
+    t.add_argument("--structure", default="", help="只列這種結構：one-part、three-part、n-part")
+    t.add_argument("--reflection", default="", help="只列這種反思層級：none、reflection、devotional、prayer（逗號分開＝其中之一）")
+    t.add_argument("--flow", default="", help="只列走過這些步驤的：events、scripture、reflection、prayer…（逗號分開＝都要有）")
+    t.add_argument("--tag", default="", help="只列有這個標籤的（逗號分開＝其中之一）")
+    tsub = t.add_subparsers(dest="action", parser_class=_Parser, metavar="{suggest,categories,restore}")
+    sg = _sub(tsub, "suggest", "templates suggest", "替一段文字挑題組：照規則排序，說出為什麼",
+              "不呼叫模型。看字裡提到什麼（擔心、工作、感謝、經文…）、寫了多長，對上每個題組的 flow、moods、tags，\n"
+              "每一分都寫成一句 why。規則在 content/suggest.json（複製到 data/suggest.json 可以自己調）。\n"
+              "字裡沒提到信仰時，信仰類題組照設定 suggest_faith 處理（auto＝放後面）。", common)
+    sg.add_argument("--text", required=True, help="使用者寫的那段話（整段放在一個參數裡）")
+    sg.add_argument("--limit", type=int, default=5, help="最多幾個建議（1–20，預設 5）")
+    _sub(tsub, "categories", "templates categories", "分類的字彙表：每一種結構、反思層級、步驤、標籤各有哪些題組",
+         "給挑題組的畫面用（Telegram 的按鈕就是從這裡來的）。每一項有 id（ASCII）、label（中文）、templates（題組 id）。", common)
+    rs = _sub(tsub, "restore", "templates restore", "把一個內建題組放回（或還原成）內建的版本",
+              "setup init --preset=generic 沒裝的題組、或改壞了的，用這個拿回來。只動 templates/ 裡那一個檔，不碰日記。", common)
+    rs.add_argument("--id", required=True, help="內建題組 id")
 
     _sub(sub, "layouts", "layouts", "列出輸出版型", "export 的 --layout 可以用這裡列出的 id。", common)
 
@@ -148,36 +203,64 @@ def _parser() -> argparse.ArgumentParser:
     es = e.add_subparsers(dest="action", parser_class=_Parser, metavar="{put,show,list}")
     put = _sub(es, "put", "entry put", "新增或更新某一天、某個題組的那一篇",
                "內容是一個 JSON 物件，從 stdin 讀（或 --input=檔案）：\n"
-               "  {\"answers\": {\"題目 id\": 答案}, \"title\": \"\", \"closing\": \"\", \"theme\": \"\", \"layout\": \"\"}\n"
-               "同一天同一個題組再寫一次＝更新那一篇。沒給的題目一律不動。", common)
-    put.add_argument("--date", required=True, help="哪一天，YYYY-MM-DD")
+               "  {\"answers\": {\"題目 id\": 答案}, \"title\": \"\", \"closing\": \"\", \"theme\": \"\", \"layout\": \"\",\n"
+               "   \"source_text\": \"作者原文（--author=ai 時）\", \"sources\": {\"題目 id\": \"這一題的原文\"}}\n"
+               "同一天同一個題組再寫一次＝更新那一篇。沒給的題目一律不動。\n"
+               "已經有答案的題目：--merge 決定（換掉／接在後面／不動）；--overwrite 點名可以換掉的題目（或 all）。\n"
+               "--author=ai：替作者整理的版本。填進去的每一題都標「AI 整理」、旁邊印作者原文（一定要給 --source-text 或 source_text）；\n"
+               "作者自己寫過的題目不換（回在 protected），除非 --overwrite 點名。", common)
+    put.add_argument("--date", required=True, help="哪一天，YYYY-MM-DD；也收 today／yesterday（照設定 day_start_hour 換日）")
     put.add_argument("--template", required=True, help="題組 id（templates 看全部）")
     put.add_argument("--merge", choices=MERGES, default="fields",
                      help="已經有答案的題目怎麼辦：fields＝換成新的（預設）；append＝接在後面；fill＝不動、只填空著的")
     put.add_argument("--format", choices=FORMATS, default="plain",
                      help="文字是純文字（plain，預設，會跳脫、保留換行）還是編輯器的 HTML（html）")
+    put.add_argument("--overwrite", default="",
+                     help="可以換掉的題目 id，逗號分開（例 --overwrite=verse1,learned）；all＝全部給了的題目。沒點名的照 --merge")
+    put.add_argument("--author", choices=AUTHORS, default="user",
+                     help="user（預設）＝作者自己的話；ai＝替作者整理的版本（標 AI 整理、附原文、不蓋作者寫的）")
+    put.add_argument("--source-text", help="--author=ai 時：作者原文的 UTF-8 檔案（整篇一份；每一題各自的原文放 JSON 的 sources）")
     put.add_argument("--input", help="從這個 UTF-8 檔案讀內容，不從 stdin（Windows PowerShell 管線會把中文弄壞時用）")
     show = _sub(es, "show", "entry show", "讀出一篇，或某一天的全部",
-                "給 --id，或給 --date（可再加 --template 只看那一個題組）。每一篇有 text（純文字）和 answers（原始答案）。", common)
+                "給 --id，或給 --date（可再加 --template 只看那一個題組）。每一篇有 text（純文字）、answers（原始答案）、\n"
+                "provenance（哪幾題是 AI 整理的、作者原文）。", common)
     show.add_argument("--id", type=int, help="日記編號（put、list 回的 id）")
-    show.add_argument("--date", help="哪一天，YYYY-MM-DD")
+    show.add_argument("--date", help="哪一天，YYYY-MM-DD（也收 today／yesterday）")
     show.add_argument("--template", help="只看這個題組的那一篇")
     lst = _sub(es, "list", "entry list", "最近寫過的日記",
                "只有日期、題組、字數、編號，不印內容。", common)
     lst.add_argument("--limit", type=int, default=30, help="最多幾篇（1–500，預設 30）")
 
     x = _sub(sub, "export", "export", "把一篇輸出成 HTML 頁面和（或）卡片 SVG",
-             "給 --id，或 --date 加 --template。檔案寫到日記資料夾的 exports/（--out-dir 可以換），回傳完整路徑。\n"
-             "--layout、--theme 只影響這一次輸出，不改那一篇的設定。", common)
+             "給 --id，或 --date 加 --template。檔案寫到日記資料夾的 exports/（設定 export_dir 或 --out-dir 可以換），回傳完整路徑。\n"
+             "--layout、--theme 只影響這一次輸出，不改那一篇的設定。每一次都照現在存的內容重新畫，改過就是新的。", common)
     x.add_argument("--id", type=int, help="日記編號")
-    x.add_argument("--date", help="哪一天，YYYY-MM-DD（要搭 --template）")
+    x.add_argument("--date", help="哪一天，YYYY-MM-DD（要搭 --template；也收 today／yesterday）")
     x.add_argument("--template", help="題組 id")
     x.add_argument("--format", choices=EXPORTS, default="both", help="both＝HTML＋卡片（預設）；html；card")
     x.add_argument("--layout", help="版型 id（layouts 看全部）")
     x.add_argument("--theme", help="紙張顏色：letterpress、notebook、linen、dawn、midnight")
     x.add_argument("--width", type=int, default=1080, help="卡片寬度，480–2400（預設 1080）")
     x.add_argument("--paper", choices=PAPERS, help="卡片的紙：ruled、grid、plain、dotted（預設跟版型）")
-    x.add_argument("--out-dir", help="輸出到這個資料夾（預設是日記資料夾的 exports/）")
+    x.add_argument("--out-dir", help="輸出到這個資料夾（預設是設定 export_dir，再不然是日記資料夾的 exports/）")
+
+    st = _sub(sub, "settings", "settings", "看、改設定（跟網頁「管理顏色」與輸出選項存的是同一份 preferences.json）",
+              "不帶參數列出每一個設定：現在的值、預設、是什麼、怎麼寫。get 看一個，set 改一個。", common)
+    stsub = st.add_subparsers(dest="action", parser_class=_Parser, metavar="{get,set}")
+    sg2 = _sub(stsub, "get", "settings get", "看一個設定", "回 {\"key\", \"value\", \"default\", \"what\", \"how\"}。", common)
+    sg2.add_argument("--key", required=True, help="設定名（settings 看全部）")
+    ss = _sub(stsub, "set", "settings set", "改一個設定",
+              "值可以是字、數字、true／false，或 JSON（palette 這種清單）；default＝放回內建的值。不合的值會說為什麼、什麼都不改。", common)
+    ss.add_argument("--key", required=True, help="設定名（settings 看全部）")
+    ss.add_argument("--value", required=True, help="新的值（寫成 --value=…）")
+
+    su = _sub(sub, "setup", "setup", "這份安裝的狀態；init 替新的資料夾挑起始題組",
+              "不帶參數：資料夾在哪、用了哪個起始組合、幾個題組、幾篇日記。", common)
+    susub = su.add_subparsers(dest="action", parser_class=_Parser, metavar="{init}")
+    si = _sub(susub, "init", "setup init", "替一個（新的）日記資料夾挑起始題組",
+              "generic＝一般：記事、感恩、三段回看、情緒、擔心、週回顧，不談信仰；devotional＝全部內建題組（這是沒跑過 init 時的樣子）。\n"
+              "只加不刪：已經有的題組一個都不動；之後想要沒裝的題組，templates restore --id= 拿回來。", common)
+    si.add_argument("--preset", choices=PRESETS, required=True, help="generic 或 devotional")
     return p
 
 
@@ -187,6 +270,14 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _day(raw: str | None) -> date:
+    word = str(raw or "").strip().lower()
+    if word in DAY_WORDS:
+        from backend import preferences
+
+        now = datetime.now()
+        if now.hour < preferences.load().day_start_hour:
+            now -= timedelta(days=1)
+        return (now - timedelta(days=DAY_WORDS[word])).date()
     try:
         return date.fromisoformat(str(raw or ""))
     except ValueError as exc:
@@ -279,6 +370,20 @@ def _merge(field, old: Any, new: Any, mode: str) -> Any:
     return new  # a choice, a fill: the new answer is the answer
 
 
+class _Overwrite:
+    """Which fields ``--overwrite`` lets a write replace."""
+
+    def __init__(self, raw: str, known: set[str]):
+        self.all = raw.strip().lower() == "all"
+        self.ids = set() if self.all else {v.strip() for v in raw.split(",") if v.strip()}
+        unknown = sorted(self.ids - known - {"closing"})
+        if unknown:
+            raise CliError(f"--overwrite 點名的題目這個題組沒有：{'、'.join(unknown)}（templates --id= 看每一題的 id）")
+
+    def __contains__(self, field_id: str) -> bool:
+        return self.all or field_id in self.ids
+
+
 # --------------------------------------------------------------------------
 # Commands
 # --------------------------------------------------------------------------
@@ -288,6 +393,7 @@ def _template_json(t, brief: bool = False) -> dict:
     out = {
         "id": t.id, "name": t.name, "description": t.description, "group": t.group or "其他",
         "order": t.order, "when": t.when, "minutes": t.minutes, "moods": t.moods, "tags": t.tags,
+        "structure": t.structure, "reflection": t.reflection, "flow": t.flow,
         "default_layout": t.default_layout, "default_theme": t.default_theme,
         "closing_label": t.closing_label,
         "fields": sum(len(s.fields) for s in t.sections),
@@ -314,6 +420,8 @@ def _template_json(t, brief: bool = False) -> dict:
 
 
 def cmd_templates(args) -> tuple[dict, str]:
+    from backend.models import FLOW_TOKENS, REFLECTIONS, STRUCTURES
+    from backend.taxonomy import check_filter_values, filter_templates
     from backend.template_registry import all_templates, get_template
 
     if args.id:
@@ -322,12 +430,63 @@ def cmd_templates(args) -> tuple[dict, str]:
             raise CliError(f"找不到題組：{args.id}（python -m backend.cli templates 看全部）")
         data = _template_json(t, args.brief)
         return {"template": data}, f"{t.name}（{t.id}）：{data['fields']} 題"
-    items = [_template_json(t, args.brief) for t in all_templates()]
+    problem = check_filter_values(structure=args.structure, reflection=args.reflection, flow=args.flow)
+    if problem:
+        raise CliError(problem)
+    chosen = filter_templates(all_templates(), structure=args.structure, reflection=args.reflection,
+                              flow=args.flow, tag=args.tag)
+    items = [_template_json(t, args.brief) for t in chosen]
     text = "\n".join(
-        f"{t['group']}｜{t['name']}（{t['id']}）約 {t['minutes'] or '?'} 分鐘：{t['when'] or t['description']}"
+        f"{t['group']}｜{t['name']}（{t['id']}）約 {t['minutes'] or '?'} 分鐘｜{STRUCTURES[t['structure']]}・"
+        f"{REFLECTIONS[t['reflection']]}・{'→'.join(FLOW_TOKENS[f] for f in t['flow'])}：{t['when'] or t['description']}"
         for t in items
     )
-    return {"templates": items, "count": len(items)}, text
+    filters = {k: v for k, v in (("structure", args.structure), ("reflection", args.reflection),
+                                 ("flow", args.flow), ("tag", args.tag)) if v}
+    return {"templates": items, "count": len(items), **({"filters": filters} if filters else {})}, text or "沒有符合的題組。"
+
+
+def cmd_templates_suggest(args) -> tuple[dict, str]:
+    from backend import preferences
+    from backend.taxonomy import suggest
+    from backend.template_registry import all_templates
+
+    text = str(args.text or "")
+    if not text.strip():
+        raise CliError("--text 是空的：把使用者寫的那段話放進來")
+    prefs = preferences.load()
+    result = suggest(text, all_templates(), faith=prefs.suggest_faith, default_id=prefs.template_id or "",
+                     limit=max(1, min(20, int(args.limit or 5))))
+    lines = [f"{i + 1}. {s['name']}（{s['id']}）{s['score']} 分：" + "；".join(s["why"])
+             for i, s in enumerate(result["suggestions"])]
+    if result["signals"]:
+        lines.append("看到的線索：" + "、".join(f"{s['label']}（{'、'.join(s['words'])}）" for s in result["signals"]))
+    return result, "\n".join(lines)
+
+
+def cmd_templates_categories(args) -> tuple[dict, str]:
+    from backend.taxonomy import categories
+    from backend.template_registry import all_templates
+
+    cats = categories(all_templates())
+    text = "\n".join(
+        f"{name}：" + "、".join(f"{c['label']}（{len(c['templates'])}）" for c in cats[name] if c["templates"])
+        for name in ("structure", "reflection", "flow", "groups", "tags")
+    )
+    return cats, text
+
+
+def cmd_templates_restore(args) -> tuple[dict, str]:
+    from backend.seed_manager import restore_default
+    from backend.template_registry import get_template
+
+    tid = str(args.id or "").strip()
+    if not tid.replace("-", "").replace("_", "").isalnum():
+        raise CliError("題組 id 只能是英數字、- 和 _")
+    if not restore_default(f"templates/{tid}.json"):
+        raise CliError(f"{tid} 不是內建題組，沒有可以放回的版本")
+    t = get_template(tid)
+    return {"template": _template_json(t, True) if t else {"id": tid}}, f"放回了內建的「{t.name if t else tid}」（{tid}）"
 
 
 def cmd_layouts(args) -> tuple[dict, str]:
@@ -339,6 +498,13 @@ def cmd_layouts(args) -> tuple[dict, str]:
         for x in all_layouts()
     ]
     return {"layouts": items}, "\n".join(f"{x['name']}（{x['id']}）：{x['description']}" for x in items)
+
+
+def _ai_fields(entry) -> list[str]:
+    marks = entry.provenance.get("fields", {}) if isinstance(entry.provenance, dict) else {}
+    if not isinstance(marks, dict):
+        return []
+    return sorted(k for k, v in marks.items() if isinstance(v, dict) and v.get("author") == "ai")
 
 
 def _summary(entry, template=None) -> dict:
@@ -357,8 +523,20 @@ def _summary(entry, template=None) -> dict:
         "id": entry.id, "date": entry.entry_date.isoformat(), "template": entry.template_id,
         "template_name": template.name if template else entry.template_id, "title": entry.title,
         "layout": entry.layout, "theme": entry.theme, "chars": chars,
+        "ai_fields": _ai_fields(entry),
         "updated_at": entry.updated_at.isoformat(timespec="seconds"),
     }
+
+
+def _read_text_file(path: str, what: str) -> str:
+    try:
+        data = Path(path).read_bytes()
+    except OSError as exc:
+        raise CliError(f"讀不到{what}的檔案：{path}（{type(exc).__name__}）") from exc
+    try:
+        return data.decode("utf-8-sig")
+    except UnicodeDecodeError as exc:
+        raise CliError(f"{what}的檔案要是 UTF-8：{path}") from exc
 
 
 def _read_payload(path: str | None = None) -> dict:
@@ -387,6 +565,9 @@ def _read_payload(path: str | None = None) -> dict:
     answers = payload.get("answers", {})
     if not isinstance(answers, dict):
         raise CliError("answers 要是一個物件：{\"題目 id\": 答案}")
+    sources = payload.get("sources", {})
+    if sources and not isinstance(sources, dict):
+        raise CliError("sources 要是一個物件：{\"題目 id\": \"這一題的原文\"}")
     return payload
 
 
@@ -402,13 +583,43 @@ def cmd_entry_put(args) -> tuple[dict, str]:
     template = get_template(args.template)
     if template is None:
         raise CliError(f"找不到題組：{args.template}（python -m backend.cli templates 看全部）")
+    ai = args.author == "ai"
+    if ai and args.merge == "append":
+        raise CliError("--author=ai 不能搭 --merge=append：會把 AI 整理的字接在作者的字後面、混成一段。用 fill（只填空的）或 --overwrite 點名")
     payload = _read_payload(args.input)
     fields = template.field_map()
+    overwrite = _Overwrite(args.overwrite or "", set(fields))
+    source_text = _read_text_file(args.source_text, "--source-text").strip() if args.source_text else \
+        str(payload.get("source_text") or "").strip()
+    sources = {str(k): str(v).strip() for k, v in (payload.get("sources") or {}).items() if str(v).strip()}
+    if ai and not (source_text or sources):
+        raise CliError("--author=ai 一定要附作者原文：--source-text=檔案，或 JSON 裡的 source_text（整篇）／sources（每一題）。"
+                       "AI 整理的版本永遠跟原文一起存。")
 
     existing = storage.get_entry_for(day, template.id)
     stored = dict(existing.answers) if existing else {}
+    provenance = dict(existing.provenance) if existing and isinstance(existing.provenance, dict) else {}
+    marks = dict(provenance.get("fields") or {})
+    now = datetime.now().isoformat(timespec="seconds")
     changed: dict[str, Any] = {}
-    filled, kept, ignored = [], [], []
+    filled, kept, protected, overwritten, ignored = [], [], [], [], []
+
+    def decide(field_id: str, old: Any) -> str:
+        """replace | append | keep | protect — what happens to a field that already has an answer."""
+        if _is_blank(old) or field_id in overwrite:
+            return "replace"
+        if args.merge == "fill":
+            return "keep"
+        if ai:
+            return "protect"          # the author's words stay unless named in --overwrite
+        return "append" if args.merge == "append" else "replace"
+
+    def mark(field_id: str) -> None:
+        if ai:
+            marks[field_id] = {"author": "ai", "at": now, **({"source": sources[field_id]} if field_id in sources else {})}
+        else:
+            marks.pop(field_id, None)
+
     for field_id, value in payload.get("answers", {}).items():
         field = fields.get(str(field_id))
         if field is None:
@@ -421,25 +632,47 @@ def cmd_entry_put(args) -> tuple[dict, str]:
             continue
         if why:
             ignored.append({"field": field.id, "why": why})
-        if args.merge == "fill" and not _is_blank(stored.get(field.id)):
+        verdict = decide(field.id, stored.get(field.id))
+        if verdict == "keep":
             kept.append(field.id)
             continue
-        changed[field.id] = _merge(field, stored.get(field.id), shaped, args.merge)
+        if verdict == "protect":
+            protected.append(field.id)
+            continue
+        if verdict == "replace" and not _is_blank(stored.get(field.id)):
+            overwritten.append(field.id)
+        changed[field.id] = _merge(field, stored.get(field.id), shaped, verdict)
         filled.append(field.id)
+        mark(field.id)
 
     closing_in = str(payload.get("closing") or "")
     closing = None
     if closing_in.strip():
         new = _rich(closing_in) if args.format == "plain" else closing_in
         old = existing.closing if existing else ""
-        if args.merge == "fill" and not _is_blank(old):
+        verdict = decide("closing", old)
+        if verdict == "keep":
             kept.append("closing")
+        elif verdict == "protect":
+            protected.append("closing")
         else:
-            closing = sanitize(f"{old}<br><br>{new}" if args.merge == "append" and not _is_blank(old) else new)
+            if verdict == "replace" and not _is_blank(old):
+                overwritten.append("closing")
+            closing = sanitize(f"{old}<br><br>{new}" if verdict == "append" else new)
             filled.append("closing")
+            mark("closing")
     title = str(payload.get("title") or "").strip()[:120]
     theme = str(payload.get("theme") or "") or None
     layout = str(payload.get("layout") or "") or None
+
+    new_provenance = None
+    if ai and filled:
+        kept_text = str(provenance.get("source_text") or "").strip()
+        if source_text and source_text not in kept_text:
+            kept_text = f"{kept_text}\n\n{source_text}".strip()
+        new_provenance = {**provenance, "fields": marks, **({"source_text": kept_text} if kept_text else {})}
+    elif marks != (provenance.get("fields") or {}):
+        new_provenance = {**provenance, "fields": marks}
 
     # The app keeps a rolling copy of the database; a write from here counts as
     # a reason to take one too, the same way the app does on start.
@@ -451,6 +684,7 @@ def cmd_entry_put(args) -> tuple[dict, str]:
                 theme=theme if theme in THEMES else template.default_theme,
                 layout=layout or template.default_layout,
                 answers=sanitize_answers(template, changed), closing=closing or "",
+                provenance=new_provenance or {},
             )
         )
         created = True
@@ -461,16 +695,23 @@ def cmd_entry_put(args) -> tuple[dict, str]:
             title=title if title and (args.merge != "fill" or not existing.title) else None,
             theme=theme if theme in THEMES else None,
             layout=layout,
+            provenance=new_provenance,
         )
         entry = storage.update_entry(existing.id, update) or existing
         created = False
 
-    result = {"entry": _summary(entry, template), "created": created,
-              "filled": filled, "kept": kept, "ignored": ignored}
+    result = {"entry": _summary(entry, template), "created": created, "author": args.author,
+              "filled": filled, "kept": kept, "protected": protected, "overwritten": overwritten, "ignored": ignored}
     verb = "新增" if created else "更新"
     text = f"{verb}了 {entry.entry_date} 的「{template.name}」（#{entry.id}）：填了 {len(filled)} 題"
+    if ai and filled:
+        text += "（標為 AI 整理、附作者原文）"
+    if overwritten:
+        text += f"，其中 {len(overwritten)} 題換掉了原本的答案"
     if kept:
         text += f"，{len(kept)} 題原本就有寫、沒有動"
+    if protected:
+        text += f"，{len(protected)} 題是作者自己寫的、沒有動（要換要 --overwrite 點名）"
     if ignored:
         text += f"，{len(ignored)} 題略過"
     return result, text
@@ -483,7 +724,7 @@ def _entry_json(entry) -> dict:
 
     template = get_template(entry.template_id) or recovery_template(entry)
     return {**_summary(entry, template), "answers": entry.answers, "closing": entry.closing,
-            "text": build_document(entry, template).to_plain_text()}
+            "provenance": entry.provenance, "text": build_document(entry, template).to_plain_text()}
 
 
 def cmd_entry_show(args) -> tuple[dict, str]:
@@ -523,7 +764,7 @@ def cmd_entry_list(args) -> tuple[dict, str]:
 def cmd_export(args) -> tuple[dict, str]:
     import re
 
-    from backend import storage
+    from backend import preferences, storage
     from backend.config import settings
     from backend.render.artifact_html import render_document
     from backend.render.card_svg import render_document_svg
@@ -558,7 +799,8 @@ def cmd_export(args) -> tuple[dict, str]:
         entry = entry.model_copy(update=updates)
     doc = build_document(entry, template)
 
-    out_dir = Path(args.out_dir) if args.out_dir else settings.exports_dir
+    configured = preferences.load().export_dir
+    out_dir = Path(args.out_dir) if args.out_dir else Path(configured) if configured else settings.exports_dir
     out_dir.mkdir(parents=True, exist_ok=True)
     stem = re.sub(r"[^0-9A-Za-z._-]+", "-", f"{entry.entry_date.isoformat()}-{entry.template_id}-{entry.id}")
     result: dict[str, Any] = {"entry": _summary(entry, template), "layout": doc.layout, "theme": doc.theme}
@@ -579,13 +821,101 @@ def cmd_export(args) -> tuple[dict, str]:
     return result, f"輸出了 {entry.entry_date} 的「{template.name}」：{names}（在 {out_dir}）"
 
 
+def _setting_row(row: dict) -> str:
+    return f"{row['key']} = {json.dumps(row['value'], ensure_ascii=False)}　（{row['what']}；{row['how']}）"
+
+
+def cmd_settings(args) -> tuple[dict, str]:
+    from backend import preferences
+    from backend.config import settings
+
+    rows = preferences.describe()
+    return {"settings": rows, "file": str(settings.data_dir / "preferences.json")}, "\n".join(_setting_row(r) for r in rows)
+
+
+def cmd_settings_get(args) -> tuple[dict, str]:
+    from backend import preferences
+
+    rows = {r["key"]: r for r in preferences.describe()}
+    row = rows.get(str(args.key or ""))
+    if row is None:
+        raise CliError(f"沒有這個設定：{args.key}（有：{'、'.join(rows)}）")
+    return row, _setting_row(row)
+
+
+def cmd_settings_set(args) -> tuple[dict, str]:
+    from backend import preferences
+    from backend.render.layout_registry import get_layout
+    from backend.render.themes import THEMES
+    from backend.template_registry import get_template
+
+    key, value = str(args.key or ""), str(args.value if args.value is not None else "")
+    checks = {
+        "template_id": (lambda v: get_template(v) is not None, "沒有這個題組（templates 看全部）"),
+        "layout": (lambda v: get_layout(v) is not None, "沒有這個版型（layouts 看全部）"),
+        "theme": (lambda v: v in THEMES, f"紙張顏色只有 {'、'.join(THEMES)}"),
+        "card_paper": (lambda v: v in PAPERS, f"紙只有 {'、'.join(PAPERS)}"),
+    }
+    if key in checks and value not in ("", "default", "null", "none"):
+        ok, why = checks[key]
+        if not ok(value):
+            raise CliError(f"{key} 的值不對：{why}（收到：{value}）")
+    try:
+        prefs = preferences.set_value(key, value)
+    except ValueError as exc:
+        raise CliError(str(exc)) from exc
+    row = next(r for r in preferences.describe() if r["key"] == key)
+    return {**row, "saved": True, "settings": prefs.model_dump(mode="json")}, "改好了：" + _setting_row(row)
+
+
+def cmd_setup(args) -> tuple[dict, str]:
+    from backend import preferences, storage
+    from backend.config import settings
+    from backend.seed_manager import presets
+    from backend.template_registry import all_templates
+
+    prefs = preferences.load()
+    counts = storage.stats()
+    tids = [t.id for t in all_templates()]
+    result = {
+        "data_dir": str(settings.data_dir), "preset": prefs.preset or "",
+        "presets": {k: v.get("label", k) for k, v in presets().items()},
+        "templates": len(tids), "template_ids": tids, "entries": counts["entries"],
+        "preferences": prefs.model_dump(mode="json"),
+    }
+    text = (f"日記資料夾：{settings.data_dir}\n起始組合：{prefs.preset or '（沒跑過 setup init＝全部內建題組）'}\n"
+            f"題組：{len(tids)} 個；日記：{counts['entries']} 篇")
+    return result, text
+
+
+def cmd_setup_init(args) -> tuple[dict, str]:
+    from backend.seed_manager import init_preset
+
+    try:
+        result = init_preset(args.preset)
+    except ValueError as exc:
+        raise CliError(str(exc)) from exc
+    text = (f"用「{result['label']}」設好了：裝了 {len(result['templates_added'])} 個題組"
+            f"（原本就有 {len(result['already_had'])} 個，一個都沒動），現在共 {len(result['templates_now'])} 個；"
+            f"設定：{json.dumps(result['settings'], ensure_ascii=False)}")
+    return result, text
+
+
 COMMANDS = {
     ("templates", None): cmd_templates,
+    ("templates", "suggest"): cmd_templates_suggest,
+    ("templates", "categories"): cmd_templates_categories,
+    ("templates", "restore"): cmd_templates_restore,
     ("layouts", None): cmd_layouts,
     ("entry", "put"): cmd_entry_put,
     ("entry", "show"): cmd_entry_show,
     ("entry", "list"): cmd_entry_list,
     ("export", None): cmd_export,
+    ("settings", None): cmd_settings,
+    ("settings", "get"): cmd_settings_get,
+    ("settings", "set"): cmd_settings_set,
+    ("setup", None): cmd_setup,
+    ("setup", "init"): cmd_setup_init,
 }
 
 
@@ -613,12 +943,15 @@ def main(argv: list[str] | None = None) -> int:
         key = (args.command, getattr(args, "action", None))
         handler = COMMANDS.get(key)
         if handler is None:
-            raise CliError("要做什麼？templates、layouts、entry put|show|list、export（-h 看說明）")
+            raise CliError("要做什麼？templates、layouts、entry put|show|list、export、settings、setup（-h 看說明）")
 
         from backend import storage
         from backend.seed_manager import install_seeds
 
-        install_seeds()
+        # ``setup init`` chooses which defaults to install; everything else
+        # installs them the way the app does on start.
+        if key != ("setup", "init"):
+            install_seeds()
         storage.init_db()
         result, text = handler(args)
     except CliError as exc:
