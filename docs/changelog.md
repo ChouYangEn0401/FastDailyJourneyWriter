@@ -2,6 +2,16 @@
 
 新的在上面。日期是做完的那天；「分支」是還沒合進 `master-init` 時的所在。
 
+## 2026-11-09 · 直接打字就能記、SYNOX pack 可以實際用（分支 `feat/synox-pack-plain-text`）
+
+來自工作單 `_inbox/20261110-150500-synox-put-plain-text.md`（Telegram 上 `/diary_put … answers=今天很好` 回「stdin 不是 JSON」）。
+
+- **`entry put` 收純文字**：內容不是 `{` 開頭就當作者自己的話，整段寫進題組的**第一個文字題**（`jot`＝新的一則，接在後面、不管 `--merge`）；
+  不拆成好幾題；`--author=ai` 不收純文字。回傳多 `plain_text_field`。JSON 信封的用法完全不變。
+- **信封多 `result.message`**：跟不加 `--json` 時印的那段文字一樣（寫入一句話、`entry show` 整篇…），SYNOX 直接顯示它，不再把結果攤平成 25 行截斷的 key=value。
+  `templates --id=` 的文字改成一題一行（題目、id、題型、選項）。
+- **SYNOX pack 0.2.0**：新指令 `jot`（預設）——`/diary 今天很好` 記成今天隨手記的一則；`put` 的 `answers` 可以直接打字；README 改寫成「怎麼用」＋用 `packs.dirs` 安裝；SKILL.md 加 `diary__jot`。
+
 ## 2026-11-09 · 題組分類、改幾題、AI 代寫標明、每個設定都有命令列、起始組合、SYNOX pack（分支 `feat/synox-pack-and-inbox`）
 
 來自三張工作單（`_inbox/`：template-taxonomy、allow-overwrite-answer、ai-diary-write）與擁有者的要求「把每一個欄位的設定的 CLI 都設計好」、讓別人也能用、包成 SYNOX skill。

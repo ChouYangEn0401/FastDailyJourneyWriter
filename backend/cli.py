@@ -24,7 +24,7 @@ command shows its own help and an example.
 Add ``--json`` for machine use: then the only thing printed is the envelope.
 The envelope is always the last line, on success and on failure:
 
-    {"ok": true, "result": {...}}            exit code 0
+    {"ok": true, "result": {..., "message": "what a person would read"}}   exit code 0
     {"ok": false, "error": "一句人話"}         exit code 1
 
 It works on the same files as the app (``JOURNAL_DATA_DIR``, or
@@ -35,7 +35,9 @@ from here is undone the same way (歷史版本). Nothing here calls a model or t
 network.
 
 ``entry put`` reads one JSON object from stdin (or from ``--input=<file>``,
-because Windows PowerShell re-encodes what it pipes into a program)::
+because Windows PowerShell re-encodes what it pipes into a program) — or plain
+text (anything not starting with ``{``), which goes into the set's first text
+question only (jot: one more note)::
 
     {"answers": {"<field id>": <value>, ...}, "title": "", "closing": "",
      "theme": "", "layout": "", "source_text": "", "sources": {"<field id>": ""}}
@@ -129,7 +131,8 @@ EXAMPLES = {
                  "python -m backend.cli entry put --date=2026-11-02 --template=capsule --merge=fill --overwrite=verse1 "
                  "--input=answers.json --json\n"
                  "python -m backend.cli entry put --date=today --template=day-review --author=ai --source-text=original.txt "
-                 "--input=answers.json --json",
+                 "--input=answers.json --json\n"
+                 "echo 今天很好 | python -m backend.cli entry put --date=today --template=jot --merge=fill --json",
     "entry show": "python -m backend.cli entry show --date=2026-11-02 --json\n"
                   "python -m backend.cli entry show --id=12 --json",
     "entry list": "python -m backend.cli entry list --limit=7 --json",
@@ -205,6 +208,7 @@ def _parser() -> argparse.ArgumentParser:
                "內容是一個 JSON 物件，從 stdin 讀（或 --input=檔案）：\n"
                "  {\"answers\": {\"題目 id\": 答案}, \"title\": \"\", \"closing\": \"\", \"theme\": \"\", \"layout\": \"\",\n"
                "   \"source_text\": \"作者原文（--author=ai 時）\", \"sources\": {\"題目 id\": \"這一題的原文\"}}\n"
+               "也可以直接給一段字（不是 { 開頭）：整段寫進題組的第一個文字題（jot＝新的一則，接在後面），不拆成好幾題。\n"
                "同一天同一個題組再寫一次＝更新那一篇。沒給的題目一律不動。\n"
                "已經有答案的題目：--merge 決定（換掉／接在後面／不動）；--overwrite 點名可以換掉的題目（或 all）。\n"
                "--author=ai：替作者整理的版本。填進去的每一題都標「AI 整理」、旁邊印作者原文（一定要給 --source-text 或 source_text）；\n"
@@ -429,7 +433,13 @@ def cmd_templates(args) -> tuple[dict, str]:
         if t is None:
             raise CliError(f"找不到題組：{args.id}（python -m backend.cli templates 看全部）")
         data = _template_json(t, args.brief)
-        return {"template": data}, f"{t.name}（{t.id}）：{data['fields']} 題"
+        lines = [f"{t.name}（{t.id}）：{data['fields']} 題"]
+        if not args.brief:
+            for s in t.sections:
+                for f in s.fields:
+                    extra = "／".join(o.label for o in f.options) if f.options else (f.pattern or "")
+                    lines.append(f"• {f.label}（{f.id}，{f.kind.value}）" + (f"：{extra}" if extra else ""))
+        return {"template": data}, "\n".join(lines)
     problem = check_filter_values(structure=args.structure, reflection=args.reflection, flow=args.flow)
     if problem:
         raise CliError(problem)
@@ -539,7 +549,25 @@ def _read_text_file(path: str, what: str) -> str:
         raise CliError(f"{what}的檔案要是 UTF-8：{path}") from exc
 
 
-def _read_payload(path: str | None = None) -> dict:
+#: Field kinds plain text can go into (see _plain_payload).
+_PLAIN_KINDS = ("list", "text", "short_text")
+
+
+def _plain_payload(template, text: str) -> tuple[dict, str]:
+    """Plain text instead of JSON (someone typing ``/diary_put today jot 今天很好``):
+    it all goes into ONE field — the set's first text question (jot: the notes,
+    one line = one note). Never spread over several questions: guessing which
+    sentence answers which question is how words end up in the wrong place."""
+    target = next((f for f in template.field_map().values() if f.kind.value in _PLAIN_KINDS), None)
+    if target is None:
+        raise CliError(f"「{template.name}」沒有可以直接打字的題目：要給 JSON，例如 {{\"answers\": {{\"題目 id\": 答案}}}}")
+    return {"answers": {target.id: text}}, target.id
+
+
+def _read_payload(path: str | None = None, template=None) -> dict:
+    """The JSON envelope from stdin / --input. With ``template`` given, text
+    that does not start with ``{`` is plain text for that set (_plain_payload);
+    the payload then carries ``_plain_field`` (the field it went into)."""
     if path:
         try:
             data = Path(path).read_bytes()
@@ -555,7 +583,10 @@ def _read_payload(path: str | None = None) -> dict:
     except UnicodeDecodeError as exc:
         raise CliError(f"{source}要是 UTF-8（Windows PowerShell 的管線會換成別的編碼：改用 --input=檔案）") from exc
     if not raw.strip():
-        raise CliError(f"{source}是空的：要給一個 JSON 物件，例如 {{\"answers\": {{\"fact\": \"今天…\"}}}}")
+        raise CliError(f"{source}是空的：直接給要記的話（寫進第一題），或一個 JSON 物件，例如 {{\"answers\": {{\"fact\": \"今天…\"}}}}")
+    if template is not None and not raw.lstrip().startswith("{"):
+        payload, field_id = _plain_payload(template, raw.strip())
+        return {**payload, "_plain_field": field_id}
     try:
         payload = json.loads(raw)
     except ValueError as exc:
@@ -586,7 +617,10 @@ def cmd_entry_put(args) -> tuple[dict, str]:
     ai = args.author == "ai"
     if ai and args.merge == "append":
         raise CliError("--author=ai 不能搭 --merge=append：會把 AI 整理的字接在作者的字後面、混成一段。用 fill（只填空的）或 --overwrite 點名")
-    payload = _read_payload(args.input)
+    payload = _read_payload(args.input, template)
+    plain_field = payload.pop("_plain_field", None)
+    if plain_field and ai:
+        raise CliError("--author=ai 要給 JSON（answers＋作者原文 source_text），不收純文字：純文字一律當作者自己的話，用 --author=user")
     fields = template.field_map()
     overwrite = _Overwrite(args.overwrite or "", set(fields))
     source_text = _read_text_file(args.source_text, "--source-text").strip() if args.source_text else \
@@ -608,6 +642,8 @@ def cmd_entry_put(args) -> tuple[dict, str]:
         """replace | append | keep | protect — what happens to a field that already has an answer."""
         if _is_blank(old) or field_id in overwrite:
             return "replace"
+        if field_id == plain_field and fields[field_id].kind.value == "list":
+            return "append"           # typed text into a list (jot) is one more note; the old ones stay as they are
         if args.merge == "fill":
             return "keep"
         if ai:
@@ -702,8 +738,18 @@ def cmd_entry_put(args) -> tuple[dict, str]:
 
     result = {"entry": _summary(entry, template), "created": created, "author": args.author,
               "filled": filled, "kept": kept, "protected": protected, "overwritten": overwritten, "ignored": ignored}
+    if plain_field:
+        result["plain_text_field"] = plain_field
     verb = "新增" if created else "更新"
     text = f"{verb}了 {entry.entry_date} 的「{template.name}」（#{entry.id}）：填了 {len(filled)} 題"
+    if plain_field and plain_field in filled:
+        text = f"{verb}了 {entry.entry_date} 的「{template.name}」（#{entry.id}）：記進「{fields[plain_field].label}」"
+        if isinstance(changed.get(plain_field), list):
+            text += f"（現在 {len(changed[plain_field])} 則）"
+    elif plain_field and plain_field in kept:
+        text = (f"沒有寫進去：{entry.entry_date} 的「{template.name}」的「{fields[plain_field].label}」已經有寫了"
+                f"（要換掉用 overwrite 點名 {plain_field}）")
+        kept = []                     # already said, in words the author can act on
     if ai and filled:
         text += "（標為 AI 整理、附作者原文）"
     if overwritten:
@@ -959,6 +1005,10 @@ def main(argv: list[str] | None = None) -> int:
             install_seeds()
         storage.init_db()
         result, text = handler(args)
+        # The same sentence a person sees without --json; hosts such as SYNOX
+        # show ``message`` as is instead of flattening the result into lines.
+        if isinstance(result, dict) and text and "message" not in result:
+            result = {**result, "message": text}
     except CliError as exc:
         if not as_json:
             print(f"✗ {exc}", file=sys.stderr)

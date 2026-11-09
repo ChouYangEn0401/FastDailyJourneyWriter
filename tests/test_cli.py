@@ -554,11 +554,45 @@ class CommandLine(unittest.TestCase):
         code, out = cli(self.data, "export", "--id=999")
         self.assertEqual((code, out["error"]), (1, "找不到日記 #999"))
 
+    def test_plain_text_goes_into_the_first_text_question_only(self):
+        # Someone typing in Telegram: /diary_put today jot 今天很好 — the text reaches stdin as is.
+        day = "2026-03-14"
+        code, out = cli(self.data, "entry", "put", f"--date={day}", "--template=jot", "--merge=fill", stdin="假的一則 <b>x</b>")
+        self.assertEqual(code, 0, out)
+        res = out["result"]
+        self.assertEqual((res["filled"], res["plain_text_field"], res["created"]), (["notes"], "notes", True))
+        self.assertIn("記進", res["message"])
+        # A second one on the same day is one more note, even under --merge=fill; the first stays.
+        code, out = cli(self.data, "entry", "put", f"--date={day}", "--template=jot", "--merge=fill", stdin="假的第二則\n假的第三則\n")
+        self.assertEqual((code, out["result"]["filled"], out["result"]["kept"]), (0, ["notes"], []))
+        self.assertIn("現在 3 則", out["result"]["message"])
+        code, out = cli(self.data, "entry", "show", f"--date={day}", "--template=jot")
+        self.assertEqual(out["result"]["entries"][0]["answers"]["notes"],
+                         ["假的一則 &lt;b&gt;x&lt;/b&gt;", "假的第二則", "假的第三則"])
+        # Another set: only its first text question, never spread over the others.
+        code, out = cli(self.data, "entry", "put", f"--date={day}", "--template=three-lines", "--merge=fill", stdin="假的一件事 也很累")
+        self.assertEqual((out["result"]["filled"], out["result"]["plain_text_field"]), (["fact"], "fact"))
+        code, out = cli(self.data, "entry", "put", f"--date={day}", "--template=three-lines", "--merge=fill", stdin="換一句")
+        self.assertEqual((code, out["result"]["filled"], out["result"]["kept"]), (0, [], ["fact"]))
+        self.assertIn("沒有寫進去", out["result"]["message"])
+        code, out = cli(self.data, "entry", "show", f"--date={day}", "--template=three-lines")
+        self.assertEqual(out["result"]["entries"][0]["answers"], {"fact": "假的一件事 也很累"})
+        # AI-polished versions always come with the original: JSON only.
+        code, out = cli(self.data, "entry", "put", f"--date={day}", "--template=jot", "--author=ai", stdin="潤飾過的")
+        self.assertEqual(code, 1)
+        self.assertIn("--author=ai 要給 JSON", out["error"])
+        # The JSON envelope still works exactly as before, and now says what it did in one sentence.
+        code, out = cli(self.data, "entry", "put", f"--date={day}", "--template=jot", "--merge=append",
+                        stdin=json.dumps({"answers": {"notes": ["假的第四則"]}}))
+        self.assertEqual((code, out["result"]["filled"]), (0, ["notes"]))
+        self.assertNotIn("plain_text_field", out["result"])
+        self.assertTrue(out["result"]["message"].startswith("更新了"))
+
     def test_bad_input_is_one_sentence(self):
         code, out = cli(self.data, "entry", "put", "--date=11/2", "--template=jot", stdin="{}")
         self.assertEqual((code, out["ok"]), (1, False))
         self.assertIn("YYYY-MM-DD", out["error"])
-        code, out = cli(self.data, "entry", "put", f"--date={DAY}", "--template=jot", stdin="not json")
+        code, out = cli(self.data, "entry", "put", f"--date={DAY}", "--template=jot", stdin="{not json")
         self.assertIn("不是 JSON", out["error"])
         code, out = cli(self.data, "nonsense")
         self.assertEqual((code, out["error"].split("（")[0]), (1, "參數有誤：沒有這個指令：'nonsense'"))

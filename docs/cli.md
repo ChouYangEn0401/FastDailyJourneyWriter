@@ -27,7 +27,7 @@ python -m backend.cli templates --brief                         # 其他
 | `templates categories` | 分類的字彙表：每一種結構、反思層級、步驟、標籤各有哪些題組 | 不會 |
 | `templates restore` | 把一個內建題組放回（或還原成）內建版本 | 只寫 `templates/` 裡那一個檔 |
 | `layouts` | 列出輸出版型 | 不會 |
-| `entry put` | 新增或更新某一天、某個題組的那一篇（內容是 JSON）；可點名換掉幾題；可標成 AI 整理 | **會**（日記資料庫） |
+| `entry put` | 新增或更新某一天、某個題組的那一篇（內容是 JSON，或直接一段字＝寫進第一題）；可點名換掉幾題；可標成 AI 整理 | **會**（日記資料庫） |
 | `entry show` | 讀出一篇，或某一天的全部 | 不會 |
 | `entry list` | 最近寫過的日記（日期、題組、字數、編號，不印內容） | 不會 |
 | `export` | 把一篇輸出成 HTML 頁面和（或）卡片 SVG | 只寫輸出的檔案 |
@@ -56,6 +56,8 @@ python -m backend.cli templates --brief                         # 其他
 ```
 
 - 信封**一定是 stdout 的最後一行**，成功、失敗都是；`error` 是一句人話（中文），可以直接轉給人看。
+- 成功時 `result.message` 是給人看的那段文字（跟不加 `--json` 時印的一樣：寫入是一句話、`entry show` 是整篇、`templates` 是一行一個題組）。
+  SYNOX 之類的宿主直接顯示它；程式要的資料照舊在 `result` 的其他欄位。
 - 參數寫錯（少了必填的、選項打錯、數字不是數字、沒有這個指令）也是結束碼 1 ＋ 同樣的信封，不會印 argparse 的英文說明。
 - 程式本身出錯（不該發生）也一樣收在信封裡：`"error": "出錯了：<種類>: <訊息>"`，結束碼 1。
 - 沒加 `--json`：結果以人看的文字印在 stdout，錯誤以「✗ …」印在 stderr，**最後一行照樣是信封**。
@@ -84,6 +86,16 @@ stdout／stderr 換成 UTF-8。呼叫端請用 UTF-8 解讀輸出；在 cp950 �
 - 每一種題型給什麼（文字、清單、選項、填空）見 SKILL.md 的「每一種題型怎麼填」。選項可以給 id 也可以給文字；
   清單可以給陣列，也可以給一段字（一行一項）。
 - `source_text`／`sources` 只在 `--author=ai` 時有意義（下面）。
+
+**也可以直接給一段字（純文字）**：內容不是 `{` 開頭，就當成作者自己的話，**整段寫進那個題組的第一個文字題**
+（題型 `list`／`text`／`short_text` 的第一題；`jot` 就是「一則一則記下來」）。給人在 Telegram 打字用：
+`/diary_put today jot 今天很好`。
+
+- 第一題是清單（`jot`）：每一行是新的一則，**接在原本的後面**（不管 `--merge`；原本的幾則不動）。
+- 第一題是文字：照 `--merge`（`fill` 下那一題已經有寫 → 不寫，`message` 會說「沒有寫進去」、`kept` 有那一題）。
+- **不會拆成好幾題**：猜哪一句回答哪一題會寫錯地方。要填好幾題就給 JSON。
+- `--author=ai` 不收純文字（AI 整理的版本一定要附原文，要用 JSON）。回傳多一個 `plain_text_field`（寫進哪一題）。
+- 想記一句 `{` 開頭的話，包成 JSON：`{"answers": {"notes": "{…}"}}`。
 
 ## 題組的分類（資料契約）
 
@@ -219,8 +231,11 @@ python -m backend.cli layouts --json
 ```text
 {"entry": {"id", "date", "template", "template_name", "title", "layout", "theme", "chars", "ai_fields": [...], "updated_at"},
  "created": true|false, "author": "user"|"ai",
- "filled": ["題目 id", ...], "kept": [...], "protected": [...], "overwritten": [...], "ignored": [{"field", "why"}, ...]}
+ "filled": ["題目 id", ...], "kept": [...], "protected": [...], "overwritten": [...], "ignored": [{"field", "why"}, ...],
+ "plain_text_field": "題目 id（給純文字時才有）", "message": "新增了 2026-11-02 的「三行日記」（#3）：填了 1 題"}
 ```
+
+- `message`＝給人看的一句話（跟不加 `--json` 時印的那一行一樣）；SYNOX 之類的宿主直接把它顯示給使用者。
 
 - `filled`＝這次寫進去的；`kept`＝`--merge=fill` 下原本就有寫、沒動的；`protected`＝`--author=ai` 下作者寫過、沒動的；`overwritten`＝原本有答案、這次換掉的（`--overwrite` 點名的，或 `--merge=fields` 下本來就會換的）。
 - `ignored`：不是這個題組的題目、對不上選項的答案，各寫一句為什麼。空的答案直接略過、不列。
@@ -231,9 +246,10 @@ echo '{"answers": {"fact": "今天下雨"}}' | python -m backend.cli entry put -
 python -m backend.cli entry put --date=2026-11-02 --template=jot --input=answers.json --json
 python -m backend.cli entry put --date=2026-11-02 --template=capsule --merge=fill --overwrite=verse1 --input=answers.json --json
 python -m backend.cli entry put --date=today --template=day-review --author=ai --source-text=original.txt --input=answers.json --json
+echo 今天很好 | python -m backend.cli entry put --date=today --template=jot --merge=fill --json
 ```
 
-（第一行是 bash／Git Bash 的寫法。Windows 的 cmd、PowerShell 管線送出去的不是 UTF-8，用 `--input=檔案`。第三行是工作單的情境：
+（第一、五行是 bash／Git Bash 的寫法。最後一行是純文字：記成 `jot` 的新的一則。Windows 的 cmd、PowerShell 管線送出去的不是 UTF-8，用 `--input=檔案`。第三行是工作單的情境：
 `capsule` 的「有哪一段經文用得上」只填了出處，要補上原文——只換那一題，其他題一字不動，然後 `export` 重新畫。）
 
 ### `entry show`
