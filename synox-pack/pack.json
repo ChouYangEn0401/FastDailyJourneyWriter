@@ -1,0 +1,115 @@
+{
+  "name": "diary",
+  "title": "📔 日記",
+  "summary": "挑題組、寫一篇、看某天、做成一頁 HTML 或一張卡片；AI 整理的版本一律標明、附原文",
+  "version": "0.1.0",
+  "kind": "cli",
+  "group": "diary",
+  "access": "member",
+  "order": 40,
+  "capabilities": ["subprocess"],
+  "requires": { "pip": [], "config": [], "env": {} },
+  "skill": "SKILL.md",
+  "storage": "plain",
+  "cli": {
+    "python": "venv",
+    "argv": ["{python}", "-m", "backend.cli"],
+    "cwd": "..",
+    "json_flag": "--json",
+    "timeout": 60,
+    "env": { "PYTHONIOENCODING": "utf-8" },
+    "commands": [
+      {
+        "name": "templates", "default": true, "effect": "READ",
+        "summary": "有哪些題組（名稱、什麼時候用、幾分鐘、分類）",
+        "argv": ["templates", "--brief", "--data-dir={user_data_dir}/diary"]
+      },
+      {
+        "name": "template", "effect": "READ",
+        "summary": "一個題組的每一題（題型、選項、填空格數、每一題怎麼填）",
+        "argv": ["templates", "--id={template}", "--data-dir={user_data_dir}/diary"],
+        "fields": [{ "name": "template", "ask": "題組 id", "required": true }]
+      },
+      {
+        "name": "suggest", "effect": "READ",
+        "summary": "替一段文字挑題組（照規則、說出為什麼；不呼叫模型）",
+        "argv": ["templates", "suggest", "--text={text}", "--data-dir={user_data_dir}/diary"],
+        "fields": [{ "name": "text", "ask": "使用者寫的那段話", "required": true }]
+      },
+      {
+        "name": "categories", "effect": "READ",
+        "summary": "分類字彙表：結構、反思層級、步驟、標籤各有哪些題組（畫按鈕用）",
+        "argv": ["templates", "categories", "--data-dir={user_data_dir}/diary"]
+      },
+      {
+        "name": "show", "effect": "READ",
+        "summary": "某一天寫了什麼（每一篇的純文字與原始答案）",
+        "argv": ["entry", "show", "--date={date}", "--data-dir={user_data_dir}/diary"],
+        "fields": [{ "name": "date", "ask": "哪一天（YYYY-MM-DD、today、yesterday）", "required": true }]
+      },
+      {
+        "name": "list", "effect": "READ",
+        "summary": "最近寫過的日記（只有日期、題組、字數、編號）",
+        "argv": ["entry", "list", "--limit=14", "--data-dir={user_data_dir}/diary"]
+      },
+      {
+        "name": "put", "effect": "WRITE",
+        "summary": "把作者自己的話寫進某一天、某個題組（只填空著的題目）",
+        "argv": ["entry", "put", "--date={date}", "--template={template}", "--merge=fill", "--data-dir={user_data_dir}/diary"],
+        "stdin": "{answers}",
+        "fields": [
+          { "name": "date", "ask": "哪一天（YYYY-MM-DD、today、yesterday）", "required": true },
+          { "name": "template", "ask": "題組 id", "required": true },
+          { "name": "answers", "ask": "JSON：{\"answers\": {\"題目 id\": 答案}, \"closing\": \"\"}", "required": true }
+        ]
+      },
+      {
+        "name": "put_ai", "effect": "WRITE",
+        "summary": "AI 替作者整理的版本：標「AI 整理」、附作者原文，不蓋作者寫的",
+        "argv": ["entry", "put", "--date={date}", "--template={template}", "--merge=fill", "--author=ai", "--data-dir={user_data_dir}/diary"],
+        "stdin": "{answers}",
+        "fields": [
+          { "name": "date", "ask": "哪一天（YYYY-MM-DD、today、yesterday）", "required": true },
+          { "name": "template", "ask": "題組 id", "required": true },
+          { "name": "answers", "ask": "JSON：{\"answers\": {…}, \"source_text\": \"作者原文（必填）\", \"sources\": {\"題目 id\": \"原文\"}}", "required": true }
+        ]
+      },
+      {
+        "name": "overwrite", "effect": "DANGER",
+        "summary": "換掉已經寫過的幾題（只動點名的題目）",
+        "argv": ["entry", "put", "--date={date}", "--template={template}", "--merge=fill", "--overwrite={fields}", "--author={author}", "--data-dir={user_data_dir}/diary"],
+        "stdin": "{answers}",
+        "fields": [
+          { "name": "date", "ask": "哪一天", "required": true },
+          { "name": "template", "ask": "題組 id", "required": true },
+          { "name": "fields", "ask": "要換掉的題目 id，逗號分開（或 all）", "required": true },
+          { "name": "author", "ask": "user（作者的話）或 ai（AI 整理，JSON 要附 source_text）", "required": true },
+          { "name": "answers", "ask": "JSON：{\"answers\": {\"題目 id\": 新答案}}", "required": true }
+        ]
+      },
+      {
+        "name": "export", "effect": "WRITE",
+        "summary": "把某一天、某個題組的那一篇做成一頁 HTML ＋ 一張卡片 SVG（照現在存的內容重新畫）",
+        "argv": ["export", "--date={date}", "--template={template}", "--format=both", "--data-dir={user_data_dir}/diary"],
+        "fields": [
+          { "name": "date", "ask": "哪一天", "required": true },
+          { "name": "template", "ask": "題組 id", "required": true }
+        ]
+      },
+      {
+        "name": "settings", "effect": "READ",
+        "summary": "每一個設定：現在的值、預設、是什麼、怎麼寫",
+        "argv": ["settings", "--data-dir={user_data_dir}/diary"]
+      },
+      {
+        "name": "settings_set", "effect": "WRITE",
+        "summary": "改一個設定（預設題組、版型、幾點換日、匯出資料夾…）",
+        "argv": ["settings", "set", "--key={key}", "--value={value}", "--data-dir={user_data_dir}/diary"],
+        "fields": [
+          { "name": "key", "ask": "設定名（settings 看全部）", "required": true },
+          { "name": "value", "ask": "新的值（default＝放回內建）", "required": true }
+        ]
+      }
+    ]
+  }
+}

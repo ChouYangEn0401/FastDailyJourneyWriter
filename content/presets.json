@@ -1,0 +1,19 @@
+{
+  "_doc": [
+    "Starter sets for `python -m backend.cli setup init --preset=<name>` (backend/seed_manager.py, init_preset).",
+    "`templates` is a list of shipped question-set ids to install, or \"all\". Sets not listed are marked as",
+    "already handled, so they do not appear on the next start either; `templates restore --id=<id>` brings one in later.",
+    "`settings` are written to preferences.json (only keys not yet set by the person).",
+    "Nothing here ever deletes a file: running init on an existing install only adds what is missing."
+  ],
+  "generic": {
+    "label": "一般：記事、感恩、三段回看，不談信仰",
+    "templates": ["jot", "three-lines", "gratitude", "day-review", "feelings", "hard-day", "worry-sort", "week-review"],
+    "settings": { "suggest_faith": "never", "template_id": "three-lines" }
+  },
+  "devotional": {
+    "label": "靈修：全部內建題組（讀經、省察、代禱、哀歌…也有不談信仰的）",
+    "templates": "all",
+    "settings": { "suggest_faith": "prefer" }
+  }
+}

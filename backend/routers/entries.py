@@ -171,6 +171,20 @@ def update_entry(entry_id: int, payload: EntryUpdate) -> Entry:
         updates["field_colors"] = sanitize_field_colors(payload.field_colors)
     if payload.closing is not None:
         updates["closing"] = sanitize(payload.closing)
+    # A field the author edits in the editor is the author's again: drop the
+    # 「AI 整理」 mark on anything whose text changed (the original stays).
+    if payload.provenance is None and existing.provenance.get("fields"):
+        marks = dict(existing.provenance["fields"])
+        answers = updates.get("answers", {})
+        for field_id in list(marks):
+            if field_id == "closing":
+                touched, new_value, old_value = "closing" in updates, updates.get("closing"), existing.closing
+            else:
+                touched, new_value, old_value = field_id in answers, answers.get(field_id), existing.answers.get(field_id)
+            if touched and new_value != old_value:
+                marks.pop(field_id)
+        if marks != existing.provenance["fields"]:
+            updates["provenance"] = {**existing.provenance, "fields": marks}
 
     try:
         updated = storage.update_entry(entry_id, payload.model_copy(update=updates))

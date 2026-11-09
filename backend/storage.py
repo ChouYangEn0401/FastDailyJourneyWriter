@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS entries (
     answers      TEXT    NOT NULL DEFAULT '{}',
     closing      TEXT    NOT NULL DEFAULT '',
     field_colors TEXT    NOT NULL DEFAULT '{}',
+    provenance   TEXT    NOT NULL DEFAULT '{}',
     created_at   TEXT    NOT NULL,
     updated_at   TEXT    NOT NULL
 );
@@ -44,6 +45,7 @@ CREATE TABLE IF NOT EXISTS entry_revisions (
     answers      TEXT    NOT NULL DEFAULT '{}',
     closing      TEXT    NOT NULL DEFAULT '',
     field_colors TEXT    NOT NULL DEFAULT '{}',
+    provenance   TEXT    NOT NULL DEFAULT '{}',
     char_count   INTEGER NOT NULL DEFAULT 0,
     -- 'edit' | 'delete' | 'restore' | 'import'
     reason       TEXT    NOT NULL DEFAULT 'edit',
@@ -72,16 +74,21 @@ def _connect() -> sqlite3.Connection:
 
 #: Columns added after the first release. SQLite has no "ADD COLUMN IF NOT
 #: EXISTS", so bring an older file forward by hand.
-_MIGRATIONS = (("layout", "TEXT NOT NULL DEFAULT 'letter'"),)
+_MIGRATIONS = (
+    ("entries", "layout", "TEXT NOT NULL DEFAULT 'letter'"),
+    # Who wrote a field when it was not the author (``entry put --author=ai``).
+    ("entries", "provenance", "TEXT NOT NULL DEFAULT '{}'"),
+    ("entry_revisions", "provenance", "TEXT NOT NULL DEFAULT '{}'"),
+)
 
 
 def init_db() -> None:
     with _connect() as conn:
         conn.executescript(_SCHEMA)
-        existing = {row["name"] for row in conn.execute("PRAGMA table_info(entries)")}
-        for column, spec in _MIGRATIONS:
+        for table, column, spec in _MIGRATIONS:
+            existing = {row["name"] for row in conn.execute(f"PRAGMA table_info({table})")}
             if column not in existing:
-                conn.execute(f"ALTER TABLE entries ADD COLUMN {column} {spec}")
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {spec}")
 
 
 def _plain_length(answers: dict[str, Any], closing: str) -> int:
@@ -106,8 +113,8 @@ def _snapshot(conn: sqlite3.Connection, row: sqlite3.Row, reason: str) -> None:
         """
         INSERT INTO entry_revisions
             (entry_id, entry_date, title, template_id, theme, layout,
-             answers, closing, field_colors, char_count, reason, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             answers, closing, field_colors, provenance, char_count, reason, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
             row["id"],
@@ -119,6 +126,7 @@ def _snapshot(conn: sqlite3.Connection, row: sqlite3.Row, reason: str) -> None:
             row["answers"],
             row["closing"],
             row["field_colors"],
+            row["provenance"],
             _plain_length(json.loads(row["answers"]), row["closing"]),
             reason,
             datetime.now().isoformat(timespec="seconds"),
@@ -177,6 +185,7 @@ def _row_to_entry(row: sqlite3.Row) -> Entry:
         answers=json.loads(row["answers"]),
         closing=row["closing"],
         field_colors=json.loads(row["field_colors"]),
+        provenance=json.loads(row["provenance"] or "{}"),
         created_at=datetime.fromisoformat(row["created_at"]),
         updated_at=datetime.fromisoformat(row["updated_at"]),
     )
@@ -188,9 +197,9 @@ def create_entry(payload: EntryCreate) -> Entry:
         cur = conn.execute(
             """
             INSERT INTO entries (entry_date, title, template_id, theme, layout,
-                                 answers, closing, field_colors,
+                                 answers, closing, field_colors, provenance,
                                  created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 payload.entry_date.isoformat(),
@@ -201,6 +210,7 @@ def create_entry(payload: EntryCreate) -> Entry:
                 json.dumps(payload.answers, ensure_ascii=False),
                 payload.closing,
                 json.dumps(payload.field_colors, ensure_ascii=False),
+                json.dumps(payload.provenance, ensure_ascii=False),
                 now,
                 now,
             ),
@@ -322,6 +332,8 @@ def update_entry(entry_id: int, payload: EntryUpdate) -> Entry | None:
         updates["field_colors"] = json.dumps(
             payload.field_colors, ensure_ascii=False
         )
+    if payload.provenance is not None:
+        updates["provenance"] = json.dumps(payload.provenance, ensure_ascii=False)
 
     if not updates:
         return existing
@@ -426,13 +438,13 @@ def restore_revision(revision_id: int) -> Entry | None:
                 """
                 UPDATE entries SET entry_date = ?, title = ?, template_id = ?,
                        theme = ?, layout = ?, answers = ?, closing = ?,
-                       field_colors = ?, updated_at = ?
+                       field_colors = ?, provenance = ?, updated_at = ?
                  WHERE id = ?
                 """,
                 (
                     rev["entry_date"], rev["title"], rev["template_id"],
                     rev["theme"], rev["layout"], rev["answers"], rev["closing"],
-                    rev["field_colors"], now, entry_id,
+                    rev["field_colors"], rev["provenance"], now, entry_id,
                 ),
             )
         else:
@@ -442,13 +454,13 @@ def restore_revision(revision_id: int) -> Entry | None:
                 """
                 INSERT INTO entries (id, entry_date, title, template_id, theme,
                                      layout, answers, closing, field_colors,
-                                     created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                     provenance, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     entry_id, rev["entry_date"], rev["title"], rev["template_id"],
                     rev["theme"], rev["layout"], rev["answers"], rev["closing"],
-                    rev["field_colors"], rev["created_at"], now,
+                    rev["field_colors"], rev["provenance"], rev["created_at"], now,
                 ),
             )
     return get_entry(entry_id)
