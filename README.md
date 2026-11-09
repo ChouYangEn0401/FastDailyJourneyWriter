@@ -23,9 +23,15 @@
 
 題目都是往同一個方向問的：看清楚今天發生了什麼、對自己誠實、然後找出下一步。
 
-**內建 20 個題組，分五類**：與神同行（靈修）、心情與難處、成為什麼樣的人、
+**內建 21 個題組，分五類**：與神同行（靈修）、心情與難處、成為什麼樣的人、
 工作與創業、簡單記一下。每一個在做什麼，看
 **[docs/templates.md](docs/templates.md)**。全部可以改，也可以刪。
+每一個都標了**寫法**：幾段（一段式／三段式／多段式）、要不要反思（只記錄／有反思／有信仰的反思／有禱告）、
+先記什麼再記什麼（`flow`），所以挑的時候可以照分類列，不用一個一個看。
+
+**不是為了靈修來的？** 第一次啟動前跑 `python -m backend.cli setup init --preset=generic`，
+就只裝不談信仰的那幾個（記事、三行、感恩、三段回看、情緒、擔心、週回顧）；之後想加哪一個再拿回來。
+沒跑的話跟以前一樣，全部都在。
 
 ---
 
@@ -421,17 +427,23 @@ docs/images/                README 用的截圖（虛構內容）
 
 ## 命令列（不用開伺服器）
 
-給腳本、排程、或 AI 助理用：列題組、寫一篇、讀一篇、匯出成 HTML／卡片。讀寫的是跟編輯器同一份日記，
+給腳本、排程、或 AI 助理用：列題組、替一段話挑題組、寫一篇、改幾題、讀一篇、匯出成 HTML／卡片、改設定。讀寫的是跟編輯器同一份日記，
 寫壞了一樣在「歷史」救得回來。
 
 ```bash
-python -m backend.cli templates --brief                      # 有哪些題組
+python -m backend.cli templates --brief                      # 有哪些題組（含分類）
+python -m backend.cli templates suggest --text="今天很累但很感謝"   # 這段話適合哪個題組、為什麼
 python -m backend.cli entry show --date=2026-11-02            # 那一天寫了什麼
+python -m backend.cli settings                               # 每一個設定（跟網頁同一份）
 python -m backend.cli entry put -h                            # 每個指令加 -h：說明＋例子
 ```
 
-**完整參考在 [docs/cli.md](docs/cli.md)**（每個指令與參數、`--json` 信封、結束碼、`--data-dir`、內容怎麼餵、隱私）；
+AI 替你潤飾、代寫的內容（`entry put --author=ai`）一律標「AI 整理」、旁邊印你的原文，而且不會蓋掉你自己寫的；
+已經寫過的題目要改，`--overwrite=` 點名那一兩題就好，其他一字不動。
+
+**完整參考在 [docs/cli.md](docs/cli.md)**（每個指令與參數、`--json` 信封、結束碼、`--data-dir`、內容怎麼餵、分類的資料契約、隱私）；
 AI 怎麼選題組、怎麼填，寫在 [skills/diary-templates/SKILL.md](skills/diary-templates/SKILL.md)。
+要接進 SYNOX（個人 agent host）：[synox-pack/](synox-pack/README.md) 是現成的 skill pack 宣告。
 
 ## API
 

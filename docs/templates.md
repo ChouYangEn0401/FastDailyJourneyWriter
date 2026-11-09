@@ -51,6 +51,7 @@
 
 | 題組 | 約幾分鐘 | 什麼時候用 |
 |---|---|---|
+| **三段回看 · 事情・感受・學到** `day-review` | 8 | 先寫發生什麼，再寫自己怎麼了，最後留一句學到的。不談信仰的三段式。 |
 | **我想成為什麼樣的人** `become` | 10 | 先寫下想長成的樣子，再看今天哪一刻像、哪一刻不像。 |
 | **高峰與低谷 · 得意時謙卑，難處中敬畏** `peaks-valleys` | 20 | 每天。今天最開心和最難受的各一件事，各問到底。上下各兩塊，可以練好幾次。 |
 | **反思膠囊 · 今天的三件事** `capsule` | 15 | 每天。一件事想到底，經文和世上的智慧各問一次。一天一塊就夠。 |
@@ -183,12 +184,19 @@
 | `minutes` | `0` | 認真寫一次大概幾分鐘。`0`＝沒寫。 |
 | `moods` | `[]` | 適合什麼心情或狀態（「疲累」「焦慮」「平靜」…），自由寫。 |
 | `tags` | `[]` | 短標籤，方便篩選（「靈修」「勾選為主」「經文」「不談信仰也可以」…）。 |
+| `structure` | 照段落數 | 寫法的結構：`one-part`（一段式）、`three-part`（三段式）、`n-part`（其他段數）。不寫就照 `sections` 的數量算；跟段落數不一致時才需要明寫（`jot` 的第二段是程式填的，所以寫 `one-part`）。 |
+| `reflection` | `none` | 要不要回頭看、看多深，一道階梯：`none` 只記錄、`reflection` 有反思（不談信仰）、`devotional` 在神面前反思／有經文、`prayer` 再加禱告／代禱／哀歌。 |
+| `flow` | `[]` | 這個題組走過哪些步驟、照什麼順序，每個只出現一次：`checkin`、`events`、`feelings`、`worries`、`work`、`decision`、`identity`、`review`、`scripture`、`reflection`、`confession`、`gratitude`、`prayer`、`trust`、`people`、`quote`、`plan`。例：`three-part` 是 `["events", "reflection", "scripture", "prayer", "gratitude"]`——先記事、再反思、再經文、再代禱感恩。不在字彙表裡的值會讓這個題組被跳過。 |
 | `default_theme` | `letterpress` | 紙張顏色：`letterpress`／`notebook`／`linen`／`dawn`／`midnight`。 |
 | `default_layout` | `letter` | 輸出版型：`letter`／`ledger`／`manuscript`／`postcard`。 |
 | `closing_label` | `給主的話` | 最後那個自由書寫欄叫什麼。 |
 | `closing_hint` | 見預設 | 那一欄標題底下的說明。 |
 | `closing_placeholder` | 見預設 | 那一欄空白時的提示字。 |
 | `sections` | `[]` | 段落。 |
+
+這三個分類鍵是 2026-11 加的：題組多了以後，使用者得每一個看過才知道選什麼；標清楚「幾段、要不要反思、先記什麼再記什麼」，
+挑題組的畫面（Telegram 的按鈕）就能照分類列，`python -m backend.cli templates suggest --text=…` 也能照使用者寫的字排出最像的幾個
+（規則在 `content/suggest.json`，不呼叫模型；見 [cli.md](cli.md) 的「題組的分類」）。
 
 `closing_*` 三個鍵是給不談信仰的題組用的。`hard-day` 把它改成「寫給自己的話」，
 `become` 改成「寫給未來的自己」，`decision-log` 改成「補充」。

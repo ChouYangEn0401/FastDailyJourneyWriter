@@ -77,7 +77,9 @@ node --test "test/*.test.js"
 
 把**改之前那一版**的指紋加進 `content/superseded.json`（那個檔案開頭有一行指令可以算）。
 這樣大家 `data/` 裡沒改過的那一份，下次啟動會自動換成新版；改過的不會被碰。
-新增題組的話，`docs/templates.md` 的表與 `skills/diary-templates/SKILL.md` 也要加一行（測試會抓）。
+新增題組的話，`docs/templates.md` 的表與 `skills/diary-templates/SKILL.md` 也要加一行（測試會抓），
+並填好三個分類鍵 `structure`／`reflection`／`flow`（字彙表在 `docs/templates.md`；有經文或禱告的步驟就要是 `devotional`／`prayer`，測試會對）。
+不談信仰的題組，考慮加進 `content/presets.json` 的 `generic` 組合。
 
 ### 改了 `backend/richtext.py` 或 `backend/render/` 的話
 
