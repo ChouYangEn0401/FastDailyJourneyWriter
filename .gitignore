@@ -56,3 +56,7 @@ local.properties
 *.aab
 *.keystore
 *.jks
+
+# MVP pipeline 的收件夾：檔案不 commit，只留 .gitkeep（2026-11-17 慣例）
+/_inbox/*
+!/_inbox/.gitkeep
